@@ -1,0 +1,16 @@
+*.bak
+*.swp
+*.a
+*.so
+*.o
+*.cmxa
+*.cmxs
+*.cma
+*.cmx
+*.cmi
+*.cmo
+*.vo
+*.glob
+*.d
+*.aux
+Makefile.coq

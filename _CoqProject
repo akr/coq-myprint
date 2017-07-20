@@ -1,0 +1,6 @@
+-Q theories myprint
+-I src
+src/myprint.ml
+src/g_myprint.ml4
+src/myprint_plugin.mllib
+theories/myprint.v
