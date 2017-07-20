@@ -22,3 +22,7 @@ See sample/ directory.
 ## Author
 
 Tanaka Akira
+
+## License
+
+GNU Lesser General Public License Version 2.1 or later
