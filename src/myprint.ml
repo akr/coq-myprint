@@ -229,7 +229,7 @@ let pp_name name =
 let pp_context_rel_decl decl =
   match decl with
   | Context.Rel.Declaration.LocalAssum (name, ty) -> str "(" ++ pp_name name ++ str ":" ++ Printer.pr_constr ty ++ str ")"
-  | Context.Rel.Declaration.LocalDef (name, expr, ty) -> str "localdef"
+  | Context.Rel.Declaration.LocalDef (name, expr, ty) -> str "(" ++ pp_name name ++ str ":" ++ Printer.pr_constr ty ++ str ":=" ++ Printer.pr_constr expr ++ str ")"
 
 let type_of_inductive_arity mind_arity : Term.constr =
   match mind_arity with
