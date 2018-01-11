@@ -4,8 +4,8 @@ This software provides Coq commands to print Gallina terms.
 
 ## Requiements
 
-- Coq 8.6 (Coq 8.5 doesn't work)
-- OCaml 4.03 (OCaml 4.02 doesn't work)
+- Coq 8.7 (Coq 8.6 doesn't work)
+- OCaml 4.05
 
 ## How to build
 
@@ -13,7 +13,7 @@ This software provides Coq commands to print Gallina terms.
 
 ## How to run
 
-    coqide -I src -Q theories myprint sample/print.v
+    coqide sample/print.v
 
 ## How to use
 

@@ -6,9 +6,11 @@ DECLARE PLUGIN "myprint_plugin"
 
 open Myprint
 
-open Constrarg (* for ident(...) *)
-open Extraargs (* for lconstr(...). lconstr accepts "PrintTerm 1 + 1" addition to "PrintTerm (1 + 1)" *)
 open Stdarg (* for wit_int *)
+
+(* for lconstr(...). lconstr accepts "PrintTerm 1 + 1" addition to "PrintTerm (1 + 1)" *)
+open Ltac_plugin
+open Extraargs
 
 VERNAC COMMAND EXTEND Myprint CLASSIFIED AS QUERY
     | [ "PrintTerm" lconstr(term) ] -> [ print_term term ]
