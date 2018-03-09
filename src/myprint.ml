@@ -116,7 +116,9 @@ let rec pp_term env evdref term =
       if Termops.is_Prop !evdref ty2 then
         str "<proof>"
       else
-        hv 2 (pp_term_content env evdref term)
+        hv 2 (
+              (* str "<" ++ (Printer.pr_econstr_env env !evdref ty) ++ str "><<" ++ (Printer.pr_econstr_env env !evdref ty2) ++ str ">>" ++ *)
+              pp_term_content env evdref term)
 and pp_term_content env evdref term =
   match EConstr.kind !evdref term with
   | Term.Rel i -> str "(Rel" ++ spc () ++ int i ++ str ")"
