@@ -4,6 +4,14 @@ open Pp
 open CErrors
 open Goptions
 
+let opt_showprop = ref true
+let _ = declare_bool_option
+        { optdepr  = false;
+          optname  = "MyPrint ShowProp";
+          optkey   = ["MyPrint";"ShowProp"];
+          optread  = (fun () -> !opt_showprop);
+          optwrite = (:=) opt_showprop }
+
 let string_of_name name =
   match name with
   | Name.Name id -> Id.to_string id
@@ -97,7 +105,18 @@ let push_rec_types env sigma (nameary,tyary,funary) =
   Environ.push_rec_types (nameary, Array.map to_constr tyary, Array.map to_constr funary) env
 
 let rec pp_term env evdref term =
-  hv 2 (pp_term_content env evdref term)
+  if !opt_showprop then
+    hv 2 (pp_term_content env evdref term)
+  else
+    let ty = Typing.e_type_of env evdref term in
+    if Termops.is_Prop !evdref ty then
+      str "<prop>"
+    else
+      let ty2 = Typing.e_type_of env evdref ty in
+      if Termops.is_Prop !evdref ty2 then
+        str "<proof>"
+      else
+        hv 2 (pp_term_content env evdref term)
 and pp_term_content env evdref term =
   match EConstr.kind !evdref term with
   | Term.Rel i -> str "(Rel" ++ spc () ++ int i ++ str ")"

@@ -284,3 +284,26 @@ Fixpoint add2 x y :=
   end.
 PrintGlobal add2.
 (* [1] means "decreasing on 2nd argument" *)
+
+PrintTerm (1 = 1). (* (App ...) *)
+Unset MyPrint ShowProp.
+PrintTerm (1 = 1). (* <Prop> *)
+
+Require Recdef.
+
+Function addx a b {measure id a} :=
+  match a with
+  | O => b
+  | S n => S (addx n b)
+  end.
+Proof.
+  intros a _ n H.
+  unfold id.
+  apply PeanoNat.Nat.lt_succ_diag_r.
+Qed.
+
+PrintGlobal addx.
+PrintGlobal addx_terminate.
+Set MyPrint ShowProp.
+PrintGlobal addx.
+PrintGlobal addx_terminate.
