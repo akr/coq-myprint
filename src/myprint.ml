@@ -92,52 +92,52 @@ let pp_ci_info ci =
     pp_join_ary (spc ()) (Array.map int ci.Constr.ci_cstr_nargs) ++
   str "]") ++ str ")"
 
-let rec pp_term sigma term =
-  hv 2 (pp_term_content sigma term)
-and pp_term_content sigma term =
-  match EConstr.kind sigma term with
+let rec pp_term evdref term =
+  hv 2 (pp_term_content evdref term)
+and pp_term_content evdref term =
+  match EConstr.kind !evdref term with
   | Term.Rel i -> str "(Rel" ++ spc () ++ int i ++ str ")"
   | Term.Var name -> str "(Var" ++ spc () ++ str (Id.to_string name) ++ str ")"
   | Term.Meta i -> str "(Meta" ++ spc () ++ int i ++ str ")"
   | Term.Evar (ekey, termary) ->
       let pp = str "(Evar" ++ spc () ++ int (Evar.repr ekey) in
       List.fold_left
-        (fun pp t -> pp ++ spc () ++ pp_term sigma t)
+        (fun pp t -> pp ++ spc () ++ pp_term evdref t)
         pp (Array.to_list termary) ++
       str ")"
-  | Term.Sort s -> pr_sort sigma s
+  | Term.Sort s -> pr_sort !evdref s
   | Term.Cast (expr, kind, ty) ->
       str "(Cast " ++
-      (pp_term sigma expr) ++ spc () ++
+      (pp_term evdref expr) ++ spc () ++
       str (match kind with
       | Constr.VMcast -> "VM"
       | Constr.NATIVEcast -> "NATIVE"
       | Constr.DEFAULTcast -> "DEFAULT"
       | Constr.REVERTcast -> "REVERT") ++ spc () ++
-      (pp_term sigma ty) ++ str ")"
+      (pp_term evdref ty) ++ str ")"
   | Term.Prod (name, ty, body) ->
       str "(Prod" ++ spc () ++
       hv 2 (
         str (string_of_name name) ++ spc () ++
-        (pp_term sigma ty)) ++ spc () ++
-      (pp_term sigma body) ++ str ")"
+        (pp_term evdref ty)) ++ spc () ++
+      (pp_term evdref body) ++ str ")"
   | Term.Lambda (name, ty, body) ->
       str "(Lambda" ++ spc () ++
       hv 2 (
         str (string_of_name name) ++ spc () ++
-        (pp_term sigma ty)) ++ spc () ++
-      (pp_term sigma body) ++ str ")"
+        (pp_term evdref ty)) ++ spc () ++
+      (pp_term evdref body) ++ str ")"
   | Term.LetIn (name, expr, ty, body) ->
       str "(Let" ++ spc () ++
       hv 2 (
         str (string_of_name name) ++ spc () ++
-        (pp_term sigma ty)) ++ spc () ++
-      (pp_term sigma expr) ++ spc () ++
-      (pp_term sigma body) ++ str ")"
+        (pp_term evdref ty)) ++ spc () ++
+      (pp_term evdref expr) ++ spc () ++
+      (pp_term evdref body) ++ str ")"
   | Term.App (f, argsary) ->
-      let pp = str "(App" ++ spc () ++ (pp_term sigma f) in
+      let pp = str "(App" ++ spc () ++ (pp_term evdref f) in
       (List.fold_left
-        (fun pp a -> pp ++ spc () ++ pp_term sigma a)
+        (fun pp a -> pp ++ spc () ++ pp_term evdref a)
         pp (Array.to_list argsary)) ++
       str ")"
   | Term.Const cu ->
@@ -172,11 +172,11 @@ and pp_term_content sigma term =
       let pp =
         str "(Case" ++ spc () ++
         hv 2 (pp_ci_info ci) ++ spc () ++
-        (pp_term sigma tyf) ++ spc () ++
-        (pp_term sigma expr)
+        (pp_term evdref tyf) ++ spc () ++
+        (pp_term evdref expr)
       in
       (List.fold_left
-        (fun pp br -> pp ++ spc () ++ pp_term sigma br)
+        (fun pp br -> pp ++ spc () ++ pp_term evdref br)
         pp (Array.to_list brs)) ++ str ")"
   | Term.Fix arg ->
       let ((ia, i), (nameary, tyary, funary)) = arg in
@@ -192,8 +192,8 @@ and pp_term_content sigma term =
           hv 2 (
             str (string_of_name name) ++ spc () ++
               str "[" ++ int recidx ++ str "]" ++ spc () ++
-              (pp_term sigma ty) ++ spc () ++
-            (pp_term sigma f) ++ str ")"))
+              (pp_term evdref ty) ++ spc () ++
+            (pp_term evdref f) ++ str ")"))
         pp (iota_list 0 (Array.length funary)) ++
       str ")"
   | Term.CoFix arg ->
@@ -212,14 +212,14 @@ and pp_term_content sigma term =
           pp ++ spc () ++
           hv 2 (
             hv 0 (str (string_of_name name) ++ spc () ++
-            (pp_term sigma ty)) ++ spc () ++
-          (pp_term sigma f) ++ str ")"))
+            (pp_term evdref ty)) ++ spc () ++
+          (pp_term evdref f) ++ str ")"))
         pp l3 ++
       str ")"
   | Term.Proj (proj, expr) ->
       str "(Proj" ++ spc () ++
       str (Projection.to_string proj) ++ spc () ++
-      (pp_term sigma expr) ++ str ")"
+      (pp_term evdref expr) ++ str ")"
 
 let pp_name name =
   match name with
@@ -280,9 +280,10 @@ let pp_ind ind =
 
 let print_term (term : Constrexpr.constr_expr) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
+  let evdref = ref sigma in
   let ((term2 : Term.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
   let term3 = EConstr.of_constr term2 in
-  Feedback.msg_info (pp_term sigma term3)
+  Feedback.msg_info (pp_term evdref term3)
 
 let print_type (term : Constrexpr.constr_expr) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
@@ -290,18 +291,18 @@ let print_type (term : Constrexpr.constr_expr) =
   let ((term2 : Term.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
   let term3 = EConstr.of_constr term2 in
   let ty = Typing.e_type_of env evdref term3 in
-  Feedback.msg_info (pp_term sigma ty)
+  Feedback.msg_info (pp_term evdref ty)
 
 let print_term_type_n (n : int) (expr : Constrexpr.constr_expr) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
   let evdref = ref sigma in
   let ((term : Term.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma expr in
   let term2 = EConstr.of_constr term in
-  Feedback.msg_info (pp_term sigma term2);
+  Feedback.msg_info (pp_term evdref term2);
   let termref = ref term2 in
   for i = 1 to n do
     termref := Typing.e_type_of env evdref !termref;
-    Feedback.msg_info (pp_term sigma !termref)
+    Feedback.msg_info (pp_term evdref !termref)
   done
 
 let print_term_type (term : Constrexpr.constr_expr) =
@@ -309,11 +310,12 @@ let print_term_type (term : Constrexpr.constr_expr) =
 
 let print_global (name : Libnames.reference) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
+  let evdref = ref sigma in
   let reference = Smartlocate.global_with_alias name in
   match reference with
   | ConstRef c ->
      begin match Global.body_of_constant c with
-     | Some b -> Feedback.msg_info (pp_term sigma (EConstr.of_constr b))
+     | Some b -> Feedback.msg_info (pp_term evdref (EConstr.of_constr b))
      | None -> error "can't print axiom"
      end
   | VarRef _ -> error "can't print VarRef"
