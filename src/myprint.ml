@@ -247,6 +247,9 @@ let pp_ind ind =
   ) env in
   hv 2 (str "(MutInd" ++ spc () ++
     str (Id.to_string mutind_body.Declarations.mind_packets.(i).Declarations.mind_typename) ++
+    spc () ++ str "mind_ntypes=" ++ int mutind_body.Declarations.mind_ntypes ++
+    spc () ++ str "mind_nparams=" ++ int mutind_body.Declarations.mind_nparams ++
+    spc () ++ str "mind_nparams_rec=" ++ int mutind_body.Declarations.mind_nparams_rec ++
     pp_prejoin_list (spc ())
       (List.map
         pp_context_rel_decl

@@ -131,6 +131,32 @@ Inductive LetInCstr (T : Type) : Type :=
 PrintTerm match lic nat (0::nil) with lic _ n => n end.
 (* ci_cstr_ndecls=[2] ci_cstr_nargs=[1] *)
 
+Inductive I1 (T1 T2 : Type) : Type :=
+| c11 : I1 T1 T2
+| c12 : I2 T1 T2 -> I1 T1 T2
+with I2 (T1 T2 : Type) : Type :=
+| c21 : I2 T1 T2
+| c22 : I1 T1 T2 -> I2 T1 T2.
+
+PrintGlobal I1.
+
+(*
+(MutInd
+  I1
+  (T2:Type)
+  (T1:Type)
+  (I1
+    (T2:Type)
+    (T1:Type)
+    (c11 (forall T1 T2 : Type, I1 T1 T2))
+    (c12 (forall T1 T2 : Type, I2 T1 T2 -> I1 T1 T2)))
+  (I2
+    (T2:Type)
+    (T1:Type)
+    (c21 (forall T1 T2 : Type, I2 T1 T2))
+    (c22 (forall T1 T2 : Type, I1 T1 T2 -> I2 T1 T2))))
+*)
+
 PrintTerm fix f x := match x with O => 0 | S y => f y end.
 (*
 (Fix
