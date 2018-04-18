@@ -70,9 +70,9 @@ let pr_sort sigma sort =
   let s = EConstr.ESorts.kind sigma sort in
   match s with
   | Sorts.Prop p ->
-      (if s = Term.prop_sort then
+      (if s = Sorts.prop then
         str "(Sort" ++ spc () ++ str "Prop)"
-      else if s = Term.set_sort then
+      else if s = Sorts.set then
         str "(Sort" ++ spc () ++ str "Set)"
       else
       (* not reached? *)
@@ -259,18 +259,22 @@ let pp_name name =
   | Names.Name.Anonymous -> str "_"
   | Names.Name.Name id -> str (Id.to_string id)
 
-let pp_context_rel_decl decl =
+let pp_context_rel_decl env evd decl =
   match decl with
-  | Context.Rel.Declaration.LocalAssum (name, ty) -> str "(" ++ pp_name name ++ str ":" ++ Printer.pr_constr ty ++ str ")"
-  | Context.Rel.Declaration.LocalDef (name, expr, ty) -> str "(" ++ pp_name name ++ str ":" ++ Printer.pr_constr ty ++ str ":=" ++ Printer.pr_constr expr ++ str ")"
+  | Context.Rel.Declaration.LocalAssum (name, ty) ->
+      str "(" ++ pp_name name ++ str ":" ++ Printer.pr_constr_env env evd ty ++ str ")"
+  | Context.Rel.Declaration.LocalDef (name, expr, ty) ->
+      str "(" ++ pp_name name ++ str ":" ++
+      Printer.pr_constr_env env evd ty ++ str ":=" ++
+      Printer.pr_constr_env env evd expr ++ str ")"
 
-let type_of_inductive_arity mind_arity : Term.constr =
+let type_of_inductive_arity mind_arity : Constr.t =
   match mind_arity with
   | Declarations.RegularArity regind_arity -> regind_arity.Declarations.mind_user_arity
-  | Declarations.TemplateArity temp_arity -> Term.mkSort (Sorts.Type (temp_arity : Declarations.template_arity).Declarations.template_level)
+  | Declarations.TemplateArity temp_arity -> Constr.mkSort (Sorts.Type (temp_arity : Declarations.template_arity).Declarations.template_level)
 
 let pp_ind ind =
-  let ((evd : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
+  let ((evd : Evd.evar_map), (env : Environ.env)) = Pfedit.get_current_context () in
   let (mutind, i) = ind in
   let mutind_body = Environ.lookup_mind mutind env in
   let env = Environ.push_rel_context (
@@ -285,7 +289,7 @@ let pp_ind ind =
     spc () ++ str "mind_nparams_rec=" ++ int mutind_body.Declarations.mind_nparams_rec ++
     pp_prejoin_list (spc ())
       (List.map
-        pp_context_rel_decl
+        (pp_context_rel_decl env evd)
         mutind_body.Declarations.mind_params_ctxt) ++
     pp_prejoin_ary (spc ())
       (Array.map
@@ -294,7 +298,7 @@ let pp_ind ind =
           str (Id.to_string oneind_body.Declarations.mind_typename) ++
           pp_prejoin_list (spc ())
             (List.map
-              pp_context_rel_decl
+              (pp_context_rel_decl env evd)
               oneind_body.Declarations.mind_arity_ctxt) ++
           pp_prejoin_ary (spc ())
             (Array.map2
@@ -312,25 +316,25 @@ let pp_ind ind =
     str ")")
 
 let print_term (term : Constrexpr.constr_expr) =
-  let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
+  let ((sigma : Evd.evar_map), (env : Environ.env)) = Pfedit.get_current_context () in
   let evdref = ref sigma in
-  let ((term3 : EConstr.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
+  let ((term3 : EConstr.constr), (_ : UState.t)) = Constrintern.interp_constr env sigma term in
   Feedback.msg_info (pp_term env evdref term3)
 
 let print_type (term : Constrexpr.constr_expr) =
-  let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
+  let ((sigma : Evd.evar_map), (env : Environ.env)) = Pfedit.get_current_context () in
   let evdref = ref sigma in
-  let ((term3 : EConstr.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
+  let ((term3 : EConstr.constr), (_ : UState.t)) = Constrintern.interp_constr env sigma term in
   let ty = Typing.e_type_of env evdref term3 in
   Feedback.msg_info (pp_term env evdref ty)
 
 let print_term_type_n (n : int) (expr : Constrexpr.constr_expr) =
-  let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
+  let ((sigma : Evd.evar_map), (env : Environ.env)) = Pfedit.get_current_context () in
   let evdref = ref sigma in
-  let ((term2 : EConstr.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma expr in
+  let ((term2 : EConstr.constr), (_ : UState.t)) = Constrintern.interp_constr env sigma expr in
   Feedback.msg_info (pp_term env evdref term2);
   let termref = ref term2 in
-  for i = 1 to n do
+  for _ = 1 to n do
     termref := Typing.e_type_of env evdref !termref;
     Feedback.msg_info (pp_term env evdref !termref)
   done
@@ -339,7 +343,7 @@ let print_term_type (term : Constrexpr.constr_expr) =
   print_term_type_n 1 term
 
 let print_global (name : Libnames.reference) =
-  let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
+  let ((sigma : Evd.evar_map), (env : Environ.env)) = Pfedit.get_current_context () in
   let evdref = ref sigma in
   let reference = Smartlocate.global_with_alias name in
   match reference with
