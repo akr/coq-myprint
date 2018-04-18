@@ -314,23 +314,20 @@ let pp_ind ind =
 let print_term (term : Constrexpr.constr_expr) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
   let evdref = ref sigma in
-  let ((term2 : Term.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
-  let term3 = EConstr.of_constr term2 in
+  let ((term3 : EConstr.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
   Feedback.msg_info (pp_term env evdref term3)
 
 let print_type (term : Constrexpr.constr_expr) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
   let evdref = ref sigma in
-  let ((term2 : Term.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
-  let term3 = EConstr.of_constr term2 in
+  let ((term3 : EConstr.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma term in
   let ty = Typing.e_type_of env evdref term3 in
   Feedback.msg_info (pp_term env evdref ty)
 
 let print_term_type_n (n : int) (expr : Constrexpr.constr_expr) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Lemmas.get_current_context () in
   let evdref = ref sigma in
-  let ((term : Term.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma expr in
-  let term2 = EConstr.of_constr term in
+  let ((term2 : EConstr.constr), (_ : Evd.evar_universe_context)) = Constrintern.interp_constr env sigma expr in
   Feedback.msg_info (pp_term env evdref term2);
   let termref = ref term2 in
   for i = 1 to n do
@@ -348,12 +345,12 @@ let print_global (name : Libnames.reference) =
   match reference with
   | ConstRef c ->
      begin match Global.body_of_constant c with
-     | Some b -> Feedback.msg_info (pp_term env evdref (EConstr.of_constr b))
-     | None -> error "can't print axiom"
+     | Some (b, _) -> Feedback.msg_info (pp_term env evdref (EConstr.of_constr b))
+     | None -> user_err (str "can't print axiom")
      end
-  | VarRef _ -> error "can't print VarRef"
+  | VarRef _ -> user_err (str "can't print VarRef")
   | IndRef ind -> Feedback.msg_info (pp_ind ind)
-  | ConstructRef _ -> error "can't print ConstructRef"
+  | ConstructRef _ -> user_err (str "can't print ConstructRef")
 
 let xhh_escape_string s =
   let len = String.length s in
