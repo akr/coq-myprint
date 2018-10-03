@@ -122,6 +122,8 @@ PrintTerm match O with O => false | S _ => true end.
 
 PrintTerm match tt with tt => 0 end.
 PrintTerm match (0,true) with (_,_) => 0 end.
+PrintTerm match (0,true) with (x,y) => x end. (* body x is (Rel 2) *)
+PrintTerm match (0,true) with (x,y) => y end. (* body y is (Rel 1) *)
 PrintTerm match true with true => 0 | false => 0 end.
 PrintTerm match O with O => false | S _ => true end.
 PrintTerm match (nil : list bool) with nil => 0 | cons h t => 0 end.
