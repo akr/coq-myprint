@@ -165,18 +165,13 @@ PrintGlobal I1.
   mind_ntypes=2
   mind_nparams=2
   mind_nparams_rec=2
-  (T2:Type)
-  (T1:Type)
+  mind_params_ctxt=[(T2:Type) (T1:Type)]
   (I1
-    (_:Type)
-    (T2:Type)
-    (T1:Type)
+    mind_arity_ctxt=[(_:Type) (T2:Type) (T1:Type)]
     (c11 (forall T1 T2 : Type, I1 T1 T2 T1))
     (c12 (forall T1 T2 : Type, I2 T1 T2 T2 -> I1 T1 T2 T1)))
   (I2
-    (_:Type)
-    (T2:Type)
-    (T1:Type)
+    mind_arity_ctxt=[(_:Type) (T2:Type) (T1:Type)]
     (c21 (forall T1 T2 : Type, I2 T1 T2 T2))
     (c22 (forall T1 T2 : Type, I1 T1 T2 T1 -> I2 T1 T2 T2))))
 *)
@@ -194,11 +189,9 @@ PrintGlobal I3.
   mind_ntypes=1
   mind_nparams=2
   mind_nparams_rec=1
-  (T2:Type)
-  (T1:Type)
+  mind_params_ctxt=[(T2:Type) (T1:Type)]
   (I3
-    (T2:Type)
-    (T1:Type)
+    mind_arity_ctxt=[(T2:Type) (T1:Type)]
     (c31 (forall T1 T2 : Type, I3 T1 T2))
     (c32 (forall T1 T2 : Type, I3 T1 bool -> I3 T1 T2))))
 *)
@@ -208,7 +201,7 @@ Inductive I4 (T1 : Type) (T2 : Type) : Type :=
 | c42 : I4 bool T2 -> I4 T1 T2.
 
 PrintGlobal I4.
-(*mind_nparams_rec=0 because 1st parameter is not always T1
+(* mind_nparams_rec=0 because 1st parameter is not always T1
 (MutInd
   I4
   mind_record=NotRecord
@@ -216,11 +209,9 @@ PrintGlobal I4.
   mind_ntypes=1
   mind_nparams=2
   mind_nparams_rec=0
-  (T2:Type)
-  (T1:Type)
+  mind_params_ctxt=[(T2:Type) (T1:Type)]
   (I4
-    (T2:Type)
-    (T1:Type)
+    mind_arity_ctxt=[(T2:Type) (T1:Type)]
     (c41 (forall T1 T2 : Type, I4 T1 T2))
     (c42 (forall T1 T2 : Type, I4 bool T2 -> I4 T1 T2))))
 *)
@@ -238,13 +229,9 @@ PrintGlobal I5.
   mind_ntypes=1
   mind_nparams=2
   mind_nparams_rec=2
-  (T2:Type)
-  (Ts:Type:=(list I5))
-  (T1:Type)
+  mind_params_ctxt=[(T2:Type) (Ts:Type:=(list I5)) (T1:Type)]
   (I5
-    (T2:Type)
-    (Ts:Type:=(list I5))
-    (T1:Type)
+    mind_arity_ctxt=[(T2:Type) (Ts:Type:=(list I5)) (T1:Type)]
     (c51 (forall T1 : Type, let Ts := list T1 in forall T2 : Type, I5 T1 T2))
     (c52
       (forall T1 : Type,
