@@ -2,6 +2,6 @@
 -I src
 -Q src myprint
 src/myprint.ml
-src/g_myprint.ml4
+src/g_myprint.mlg
 src/myprint_plugin.mllib
 theories/myprint.v

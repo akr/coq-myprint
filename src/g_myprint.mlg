@@ -1,0 +1,26 @@
+
+DECLARE PLUGIN "myprint_plugin"
+
+{
+let () = Mltop.add_known_plugin (fun () ->
+  Feedback.msg_info Pp.(str"myprint 0.1"))
+  "myprint"
+
+open Myprint
+
+open Stdarg (* for wit_int *)
+
+(* for lconstr(...). lconstr accepts "PrintTerm 1 + 1" addition to "PrintTerm (1 + 1)" *)
+open Ltac_plugin
+open Extraargs
+}
+
+VERNAC COMMAND EXTEND Myprint CLASSIFIED AS QUERY
+    | ![ proof ] [ "PrintTerm" lconstr(term) ] -> { fun ~pstate -> print_term pstate term; pstate }
+    | ![ proof ] [ "PrintType" lconstr(term) ] -> { fun ~pstate -> print_type pstate term; pstate }
+    | ![ proof ] [ "PrintTermType" lconstr(term) ] -> { fun ~pstate -> print_term_type pstate term; pstate }
+    | ![ proof ] [ "PrintTermTypeN" int(n) lconstr(term) ] -> { fun ~pstate ->  print_term_type_n pstate n term; pstate }
+    | ![ proof ] [ "PrintGlobal" global(name) ] -> { fun ~pstate -> print_global pstate name; pstate }
+    | [ "PrintEscape" ident(id) ] -> { print_escape id }
+END
+
