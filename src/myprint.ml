@@ -261,23 +261,23 @@ let pp_name name =
   | Names.Name.Anonymous -> str "_"
   | Names.Name.Name id -> str (Id.to_string id)
 
-let pp_context_rel_decl env evd decl =
+let pp_context_rel_decl env sigma decl =
   match decl with
   | Context.Rel.Declaration.LocalAssum (name, ty) ->
       let name = Context.binder_name name in
-      str "(" ++ pp_name name ++ str ":" ++ Printer.pr_constr_env env evd ty ++ str ")"
+      str "(" ++ pp_name name ++ str ":" ++ Printer.pr_constr_env env sigma ty ++ str ")"
   | Context.Rel.Declaration.LocalDef (name, expr, ty) ->
       let name = Context.binder_name name in
       str "(" ++ pp_name name ++ str ":" ++
-      Printer.pr_constr_env env evd ty ++ str ":=" ++
-      Printer.pr_constr_env env evd expr ++ str ")"
+      Printer.pr_constr_env env sigma ty ++ str ":=" ++
+      Printer.pr_constr_env env sigma expr ++ str ")"
 
 let type_of_inductive_arity mind_arity : Constr.t =
   match mind_arity with
   | Declarations.RegularArity regind_arity -> regind_arity.Declarations.mind_user_arity
   | Declarations.TemplateArity temp_arity -> Constr.mkType (temp_arity : Declarations.template_arity).Declarations.template_level
 
-let pp_ind env evd ind =
+let pp_ind env sigma ind =
   let (mutind, i) = ind in
   let mutind_body = Environ.lookup_mind mutind env in
   let env = Environ.push_rel_context (
@@ -294,7 +294,7 @@ let pp_ind env evd ind =
     spc () ++ str "mind_nparams_rec=" ++ int mutind_body.Declarations.mind_nparams_rec ++
     pp_prejoin_list (spc ())
       (List.map
-        (pp_context_rel_decl env evd)
+        (pp_context_rel_decl env sigma)
         mutind_body.Declarations.mind_params_ctxt) ++
     pp_prejoin_ary (spc ())
       (Array.map
@@ -303,14 +303,14 @@ let pp_ind env evd ind =
           str (Id.to_string oneind_body.Declarations.mind_typename) ++
           pp_prejoin_list (spc ())
             (List.map
-              (pp_context_rel_decl env evd)
+              (pp_context_rel_decl env sigma)
               oneind_body.Declarations.mind_arity_ctxt) ++
           pp_prejoin_ary (spc ())
             (Array.map2
               (fun consname user_lc ->
                 hv 2 (str "(" ++
                 str (Id.to_string consname) ++ spc () ++
-                Printer.pr_constr_env env evd user_lc ++
+                Printer.pr_constr_env env sigma user_lc ++
                 str ")")
               )
               oneind_body.Declarations.mind_consnames
