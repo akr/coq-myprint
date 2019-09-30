@@ -12,12 +12,25 @@ PrintTerm nat.
 PrintTerm O.
 (* (Construct Coq.Init.Datatypes.nat 0 1 nat O) *)
 
+PrintTerm S.
+(* (Construct Coq.Init.Datatypes.nat 0 2 nat S) *)
+
 PrintTerm S O.
 (*
 (App
   (Construct Coq.Init.Datatypes.nat 0 2 nat S)
   (Construct Coq.Init.Datatypes.nat 0 1 nat O))
 *)
+
+Inductive MutInd1 := MC11 : MutInd1 | MC12 : MutInd2 -> MutInd1
+with MutInd2 := MC21 : MutInd2 | MC22 : MutInd1 -> MutInd2.
+
+PrintTerm MutInd1. (* (Ind print.MutInd1 0 MutInd1) *)
+PrintTerm MutInd2. (* (Ind print.MutInd1 1 MutInd2) *)
+PrintTerm MC11. (* (Construct print.MutInd1 0 1 MutInd1 MC11) *)
+PrintTerm MC12. (* (Construct print.MutInd1 0 2 MutInd1 MC12) *)
+PrintTerm MC21. (* (Construct print.MutInd1 1 1 MutInd2 MC21) *)
+PrintTerm MC22. (* (Construct print.MutInd1 1 2 MutInd2 MC22) *)
 
 PrintTerm list nat.
 (* (App (Ind Coq.Init.Datatypes.list 0 list) (Ind Coq.Init.Datatypes.nat 0 nat)) *)
@@ -133,30 +146,107 @@ Inductive LetInCstr (T : Type) : Type :=
 PrintTerm match lic nat (0::nil) with lic _ n => n end.
 (* ci_cstr_ndecls=[2] ci_cstr_nargs=[1] *)
 
-Inductive I1 (T1 T2 : Type) : Type :=
-| c11 : I1 T1 T2
-| c12 : I2 T1 T2 -> I1 T1 T2
-with I2 (T1 T2 : Type) : Type :=
-| c21 : I2 T1 T2
-| c22 : I1 T1 T2 -> I2 T1 T2.
+Inductive I1 (T1 T2 : Type) : Type -> Type :=
+| c11 : I1 T1 T2 T1
+| c12 : I2 T1 T2 T2 -> I1 T1 T2 T1
+with I2 (T1 T2 : Type) : Type -> Type :=
+| c21 : I2 T1 T2 T2
+| c22 : I1 T1 T2 T1 -> I2 T1 T2 T2.
 
 PrintGlobal I1.
 
 (*
 (MutInd
   I1
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=2
+  mind_nparams=2
+  mind_nparams_rec=2
   (T2:Type)
   (T1:Type)
   (I1
+    (_:Type)
     (T2:Type)
     (T1:Type)
-    (c11 (forall T1 T2 : Type, I1 T1 T2))
-    (c12 (forall T1 T2 : Type, I2 T1 T2 -> I1 T1 T2)))
+    (c11 (forall T1 T2 : Type, I1 T1 T2 T1))
+    (c12 (forall T1 T2 : Type, I2 T1 T2 T2 -> I1 T1 T2 T1)))
   (I2
+    (_:Type)
     (T2:Type)
     (T1:Type)
-    (c21 (forall T1 T2 : Type, I2 T1 T2))
-    (c22 (forall T1 T2 : Type, I1 T1 T2 -> I2 T1 T2))))
+    (c21 (forall T1 T2 : Type, I2 T1 T2 T2))
+    (c22 (forall T1 T2 : Type, I1 T1 T2 T1 -> I2 T1 T2 T2))))
+*)
+
+Inductive I3 (T1 : Type) (T2 : Type) : Type :=
+| c31 : I3 T1 T2
+| c32 : I3 T1 bool -> I3 T1 T2.
+
+PrintGlobal I3.
+(* mind_nparams_rec=1 because 2nd parameter is not always T2
+(MutInd
+  I3
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=1
+  mind_nparams=2
+  mind_nparams_rec=1
+  (T2:Type)
+  (T1:Type)
+  (I3
+    (T2:Type)
+    (T1:Type)
+    (c31 (forall T1 T2 : Type, I3 T1 T2))
+    (c32 (forall T1 T2 : Type, I3 T1 bool -> I3 T1 T2))))
+*)
+
+Inductive I4 (T1 : Type) (T2 : Type) : Type :=
+| c41 : I4 T1 T2
+| c42 : I4 bool T2 -> I4 T1 T2.
+
+PrintGlobal I4.
+(*mind_nparams_rec=0 because 1st parameter is not always T1
+(MutInd
+  I4
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=1
+  mind_nparams=2
+  mind_nparams_rec=0
+  (T2:Type)
+  (T1:Type)
+  (I4
+    (T2:Type)
+    (T1:Type)
+    (c41 (forall T1 T2 : Type, I4 T1 T2))
+    (c42 (forall T1 T2 : Type, I4 bool T2 -> I4 T1 T2))))
+*)
+
+Inductive I5 (T1 : Type) (Ts := list T1) (T2 : Type) : Type :=
+| c51 : I5 T1 T2
+| c52 : I5 T1 T2 -> I5 T1 T2.
+
+PrintGlobal I5.
+(* mind_nparams and mind_nparams_rec doesn't count let-binding in the parameters.
+(MutInd
+  I5
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=1
+  mind_nparams=2
+  mind_nparams_rec=2
+  (T2:Type)
+  (Ts:Type:=(list I5))
+  (T1:Type)
+  (I5
+    (T2:Type)
+    (Ts:Type:=(list I5))
+    (T1:Type)
+    (c51 (forall T1 : Type, let Ts := list T1 in forall T2 : Type, I5 T1 T2))
+    (c52
+      (forall T1 : Type,
+       let Ts := list T1 in forall T2 : Type, I5 T1 T2 -> I5 T1 T2))))
 *)
 
 PrintTerm fix f x := match x with O => 0 | S y => f y end.
@@ -164,13 +254,15 @@ PrintTerm fix f x := match x with O => 0 | S y => f y end.
 (Fix
   f
   (f
-     (Prod
-       x (Ind Coq.Init.Datatypes.nat 0 nat)
-       (Ind Coq.Init.Datatypes.nat 0 nat))
+     decarg=0
+     (Prod x (Ind Coq.Init.Datatypes.nat 0 nat) (Ind Coq.Init.Datatypes.nat 0 nat))
      (Lambda
        x (Ind Coq.Init.Datatypes.nat 0 nat)
        (Case
-         ((Ind Coq.Init.Datatypes.nat 0) 0 [0 1] [0 1])
+         ((Ind Coq.Init.Datatypes.nat 0)
+           ci_npar=0
+           ci_cstr_ndecls=[0 1]
+           ci_cstr_nargs=[0 1])
          (Lambda
            x (Ind Coq.Init.Datatypes.nat 0 nat)
            (Ind Coq.Init.Datatypes.nat 0 nat))
@@ -185,13 +277,15 @@ PrintTerm fix f x := match x with O => 0 | S y => g y end
 (Fix
   g
   (f
-     (Prod
-       x (Ind Coq.Init.Datatypes.nat 0 nat)
-       (Ind Coq.Init.Datatypes.nat 0 nat))
+     decarg=0
+     (Prod x (Ind Coq.Init.Datatypes.nat 0 nat) (Ind Coq.Init.Datatypes.nat 0 nat))
      (Lambda
        x (Ind Coq.Init.Datatypes.nat 0 nat)
        (Case
-         ((Ind Coq.Init.Datatypes.nat 0) 0 [0 1] [0 1])
+         ((Ind Coq.Init.Datatypes.nat 0)
+           ci_npar=0
+           ci_cstr_ndecls=[0 1]
+           ci_cstr_nargs=[0 1])
          (Lambda
            x (Ind Coq.Init.Datatypes.nat 0 nat)
            (Ind Coq.Init.Datatypes.nat 0 nat))
@@ -199,13 +293,15 @@ PrintTerm fix f x := match x with O => 0 | S y => g y end
          (Construct Coq.Init.Datatypes.nat 0 1 nat O)
          (Lambda y (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 3) (Rel 1))))))
   (g
-     (Prod
-       u (Ind Coq.Init.Datatypes.nat 0 nat)
-       (Ind Coq.Init.Datatypes.nat 0 nat))
+     decarg=0
+     (Prod u (Ind Coq.Init.Datatypes.nat 0 nat) (Ind Coq.Init.Datatypes.nat 0 nat))
      (Lambda
        u (Ind Coq.Init.Datatypes.nat 0 nat)
        (Case
-         ((Ind Coq.Init.Datatypes.nat 0) 0 [0 1] [0 1])
+         ((Ind Coq.Init.Datatypes.nat 0)
+           ci_npar=0
+           ci_cstr_ndecls=[0 1]
+           ci_cstr_nargs=[0 1])
          (Lambda
            u (Ind Coq.Init.Datatypes.nat 0 nat)
            (Ind Coq.Init.Datatypes.nat 0 nat))
@@ -215,6 +311,20 @@ PrintTerm fix f x := match x with O => 0 | S y => g y end
 *)
 
 CoInductive Stream : Set := Seq : nat -> Stream -> Stream.
+
+PrintTerm Stream. (* (Ind print.Stream 0 Stream) *)
+PrintGlobal Stream.
+(*
+(MutInd
+  Stream
+  mind_record=NotRecord
+  mind_finite=CoFinite
+  mind_ntypes=1
+  mind_nparams=0
+  mind_nparams_rec=0
+  (Stream (Seq (nat -> Stream -> Stream))))
+*)
+
 PrintTerm cofix from (n:nat) : Stream := Seq n (from (S n)).
 (*
 (CoFix
@@ -262,7 +372,10 @@ PrintGlobal negb.
 (Lambda
   b (Ind Coq.Init.Datatypes.bool 0 bool)
   (Case
-    ((Ind Coq.Init.Datatypes.bool 0) 0 [0 0] [0 0])
+    ((Ind Coq.Init.Datatypes.bool 0)
+      ci_npar=0
+      ci_cstr_ndecls=[0 0]
+      ci_cstr_nargs=[0 0])
     (Lambda
       b (Ind Coq.Init.Datatypes.bool 0 bool)
       (Ind Coq.Init.Datatypes.bool 0 bool))
@@ -277,7 +390,7 @@ Fixpoint add1 x y :=
   | S z => S (add1 z y)
   end.
 PrintGlobal add1.
-(* [0] means "decreasing on 1st argument" *)
+(* decarg=0 means "decreasing on 1st argument" *)
 
 Fixpoint add2 x y :=
   match y with
@@ -285,7 +398,7 @@ Fixpoint add2 x y :=
   | S z => S (add2 x z)
   end.
 PrintGlobal add2.
-(* [1] means "decreasing on 2nd argument" *)
+(* decarg=1 means "decreasing on 2nd argument" *)
 
 PrintTerm (1 = 1). (* (App ...) *)
 Unset MyPrint ShowProp.
@@ -309,3 +422,6 @@ PrintGlobal addx_terminate.
 Set MyPrint ShowProp.
 PrintGlobal addx.
 PrintGlobal addx_terminate.
+
+Require Int63.
+PrintGlobal Int63.max_int.

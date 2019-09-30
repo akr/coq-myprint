@@ -86,11 +86,11 @@ let pp_ci_info ci =
     str "(Ind" ++ spc () ++
     str (MutInd.to_string mutind) ++ spc () ++
     int i ++ str ")") ++ spc () ++
-  int ci.Constr.ci_npar ++ spc () ++
-  hv 2 (str "[" ++
+  str "ci_npar=" ++ int ci.Constr.ci_npar ++ spc () ++
+  hv 2 (str "ci_cstr_ndecls=[" ++
     pp_join_ary (spc ()) (Array.map int ci.Constr.ci_cstr_ndecls) ++
   str "]") ++ spc () ++
-  hv 2 (str "[" ++
+  hv 2 (str "ci_cstr_nargs=[" ++
     pp_join_ary (spc ()) (Array.map int ci.Constr.ci_cstr_nargs) ++
   str "]") ++ str ")"
 
@@ -221,7 +221,7 @@ and pp_term_content env evdref term =
           str "(" ++
           hv 2 (
             str (string_of_name name) ++ spc () ++
-              str "[" ++ int recidx ++ str "]" ++ spc () ++
+              str "decarg=" ++ int recidx ++ spc () ++
               (pp_term env evdref ty) ++ spc () ++
             (pp_term env2 evdref f) ++ str ")"))
         pp (iota_list 0 (Array.length funary)) ++
@@ -237,10 +237,11 @@ and pp_term_content env evdref term =
         (fun (name, ty) f l -> (Context.binder_name name, ty, f) :: l)
         l2 (Array.to_list funary) []
       in
-      let pp = str "(CoFix" ++ spc () ++ int i in
+      let pp = str "(CoFix" ++ spc () ++ str (string_of_name (Context.binder_name (Array.get nameary i))) in
       List.fold_left
         (fun pp (name, ty, f) ->
           pp ++ spc () ++
+          str "(" ++
           hv 2 (
             hv 0 (str (string_of_name name) ++ spc () ++
             (pp_term env evdref ty)) ++ spc () ++
@@ -286,6 +287,8 @@ let pp_ind env evd ind =
   ) env in
   hv 2 (str "(MutInd" ++ spc () ++
     str (Id.to_string mutind_body.Declarations.mind_packets.(i).Declarations.mind_typename) ++
+    spc () ++ str "mind_record=" ++ str (match mutind_body.Declarations.mind_record with Declarations.NotRecord -> "NotRecord" | Declarations.FakeRecord -> "FakeRecord" | Declarations.PrimRecord _ -> "PrimRecord") ++
+    spc () ++ str "mind_finite=" ++ str (match mutind_body.Declarations.mind_finite with Declarations.Finite -> "Finite" | Declarations.CoFinite -> "CoFinite" | Declarations.BiFinite -> "BiFinite") ++
     spc () ++ str "mind_ntypes=" ++ int mutind_body.Declarations.mind_ntypes ++
     spc () ++ str "mind_nparams=" ++ int mutind_body.Declarations.mind_nparams ++
     spc () ++ str "mind_nparams_rec=" ++ int mutind_body.Declarations.mind_nparams_rec ++
