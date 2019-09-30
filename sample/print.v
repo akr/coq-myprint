@@ -423,5 +423,6 @@ Set MyPrint ShowProp.
 PrintGlobal addx.
 PrintGlobal addx_terminate.
 
-Require Int63.
+Require Import Int63.
+PrintTerm 0%int63.
 PrintGlobal Int63.max_int.
