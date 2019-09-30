@@ -147,6 +147,23 @@ PrintTerm match lic nat (0::nil) with lic _ n => n end.
 (* ci_cstr_ndecls=[2] ci_cstr_nargs=[1] *)
 
 PrintGlobal LetInCstr.
+(*
+(MutInd
+  LetInCstr
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=1
+  mind_nparams=1
+  mind_nparams_rec=1
+  mind_params_ctxt=[(T:Type)]
+  (LetInCstr
+    mind_arity_ctxt=[(T:Type)]
+    (lic (forall T : Type, let LT := list T in LT -> LetInCstr T))
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[1]
+    mind_consnrealdecls=[2]))
+*)
 
 Inductive I1 (T1 T2 : Type) : Type -> Type :=
 | c11 : I1 T1 T2 T1
@@ -169,11 +186,19 @@ PrintGlobal I1.
   (I1
     mind_arity_ctxt=[(_:Type) (T2:Type) (T1:Type)]
     (c11 (forall T1 T2 : Type, I1 T1 T2 T1))
-    (c12 (forall T1 T2 : Type, I2 T1 T2 T2 -> I1 T1 T2 T1)))
+    (c12 (forall T1 T2 : Type, I2 T1 T2 T2 -> I1 T1 T2 T1))
+    mind_nrealargs=1
+    mind_nrealdecls=1
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1])
   (I2
     mind_arity_ctxt=[(_:Type) (T2:Type) (T1:Type)]
     (c21 (forall T1 T2 : Type, I2 T1 T2 T2))
-    (c22 (forall T1 T2 : Type, I1 T1 T2 T1 -> I2 T1 T2 T2))))
+    (c22 (forall T1 T2 : Type, I1 T1 T2 T1 -> I2 T1 T2 T2))
+    mind_nrealargs=1
+    mind_nrealdecls=1
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1]))
 *)
 
 Inductive I3 (T1 : Type) (T2 : Type) : Type :=
@@ -193,7 +218,11 @@ PrintGlobal I3.
   (I3
     mind_arity_ctxt=[(T2:Type) (T1:Type)]
     (c31 (forall T1 T2 : Type, I3 T1 T2))
-    (c32 (forall T1 T2 : Type, I3 T1 bool -> I3 T1 T2))))
+    (c32 (forall T1 T2 : Type, I3 T1 bool -> I3 T1 T2))
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1]))
 *)
 
 Inductive I4 (T1 : Type) (T2 : Type) : Type :=
@@ -213,7 +242,11 @@ PrintGlobal I4.
   (I4
     mind_arity_ctxt=[(T2:Type) (T1:Type)]
     (c41 (forall T1 T2 : Type, I4 T1 T2))
-    (c42 (forall T1 T2 : Type, I4 bool T2 -> I4 T1 T2))))
+    (c42 (forall T1 T2 : Type, I4 bool T2 -> I4 T1 T2))
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1]))
 *)
 
 Inductive I5 (T1 : Type) (Ts := list T1) (T2 : Type) : Type :=
@@ -235,7 +268,38 @@ PrintGlobal I5.
     (c51 (forall T1 : Type, let Ts := list T1 in forall T2 : Type, I5 T1 T2))
     (c52
       (forall T1 : Type,
-       let Ts := list T1 in forall T2 : Type, I5 T1 T2 -> I5 T1 T2))))
+       let Ts := list T1 in forall T2 : Type, I5 T1 T2 -> I5 T1 T2))
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1]))
+*)
+
+Inductive I6 (T1:Type) (L1:=1) (T2:Type) : forall (T3:Type) (L2:=2) (T4:Type), Type :=
+| c6 : I6 T1 T2 nat nat.
+
+PrintGlobal I6.
+(*
+(MutInd
+  I6
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=1
+  mind_nparams=2
+  mind_nparams_rec=2
+  mind_params_ctxt=[(T2:Type) (L1:nat:=1) (T1:Type)]
+  (I6
+    mind_arity_ctxt=[(T4:Type)
+      (L2:nat:=2)
+      (T3:Type)
+      (T2:Type)
+      (L1:nat:=1)
+      (T1:Type)]
+    (c6 (forall T1 : Type, let L1 := 1 in forall T2 : Type, I6 T1 T2 nat nat))
+    mind_nrealargs=2
+    mind_nrealdecls=3
+    mind_consnrealargs=[0]
+    mind_consnrealdecls=[0]))
 *)
 
 PrintTerm fix f x := match x with O => 0 | S y => f y end.
@@ -311,7 +375,14 @@ PrintGlobal Stream.
   mind_ntypes=1
   mind_nparams=0
   mind_nparams_rec=0
-  (Stream (Seq (nat -> Stream -> Stream))))
+  mind_params_ctxt=[]
+  (Stream
+    mind_arity_ctxt=[]
+    (Seq (nat -> Stream -> Stream))
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[2]
+    mind_consnrealdecls=[2]))
 *)
 
 PrintTerm cofix from (n:nat) : Stream := Seq n (from (S n)).

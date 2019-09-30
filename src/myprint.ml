@@ -316,6 +316,10 @@ let pp_ind env sigma ind =
               )
               oneind_body.Declarations.mind_consnames
               oneind_body.Declarations.mind_user_lc) ++
+          spc () ++ str "mind_nrealargs=" ++ int oneind_body.Declarations.mind_nrealargs ++
+          spc () ++ str "mind_nrealdecls=" ++ int oneind_body.Declarations.mind_nrealdecls ++
+          spc () ++ str "mind_consnrealargs=[" ++ hv 2 (pp_join_ary (spc ()) (Array.map int oneind_body.Declarations.mind_consnrealargs)) ++ str "]" ++
+          spc () ++ str "mind_consnrealdecls=[" ++ hv 2 (pp_join_ary (spc ()) (Array.map int oneind_body.Declarations.mind_consnrealdecls)) ++ str "]" ++
           str ")")
         )
         mutind_body.Declarations.mind_packets) ++
