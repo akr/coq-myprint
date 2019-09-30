@@ -69,18 +69,10 @@ let pp_postjoin_list sep l =
 let pr_sort sigma sort =
   let s = EConstr.ESorts.kind sigma sort in
   match s with
-  | Sorts.Prop p ->
-      (if s = Sorts.prop then
-        str "(Sort" ++ spc () ++ str "Prop)"
-      else if s = Sorts.set then
-        str "(Sort" ++ spc () ++ str "Set)"
-      else
-      (* not reached? *)
-      str "(Sort" ++ spc () ++
-      str (match p with
-      | Sorts.Pos -> "Pos"
-      | Sorts.Null ->"Null") ++
-      str ")")
+  | Sorts.Prop ->
+      str "(Sort" ++ spc () ++ str "Prop)"
+  | Sorts.Set ->
+      str "(Sort" ++ spc () ++ str "Set)"
   | Sorts.Type u ->
       str "(Sort" ++ spc () ++
       str "Type" ++ spc () ++
@@ -108,11 +100,11 @@ let rec pp_term env evdref term =
   if !opt_showprop then
     hv 2 (pp_term_content env evdref term)
   else
-    let ty = Typing.e_type_of env evdref term in
+    let ty = Retyping.get_type_of env !evdref term in
     if Termops.is_Prop !evdref ty then
       str "<prop>"
     else
-      let ty2 = Typing.e_type_of env evdref ty in
+      let ty2 = Retyping.get_type_of env !evdref ty in
       if Termops.is_Prop !evdref ty2 then
         str "<proof>"
       else
@@ -121,17 +113,17 @@ let rec pp_term env evdref term =
               pp_term_content env evdref term)
 and pp_term_content env evdref term =
   match EConstr.kind !evdref term with
-  | Term.Rel i -> str "(Rel" ++ spc () ++ int i ++ str ")"
-  | Term.Var name -> str "(Var" ++ spc () ++ str (Id.to_string name) ++ str ")"
-  | Term.Meta i -> str "(Meta" ++ spc () ++ int i ++ str ")"
-  | Term.Evar (ekey, termary) ->
+  | Constr.Rel i -> str "(Rel" ++ spc () ++ int i ++ str ")"
+  | Constr.Var name -> str "(Var" ++ spc () ++ str (Id.to_string name) ++ str ")"
+  | Constr.Meta i -> str "(Meta" ++ spc () ++ int i ++ str ")"
+  | Constr.Evar (ekey, termary) ->
       let pp = str "(Evar" ++ spc () ++ int (Evar.repr ekey) in
       List.fold_left
         (fun pp t -> pp ++ spc () ++ pp_term env evdref t)
         pp (Array.to_list termary) ++
       str ")"
-  | Term.Sort s -> pr_sort !evdref s
-  | Term.Cast (expr, kind, ty) ->
+  | Constr.Sort s -> pr_sort !evdref s
+  | Constr.Cast (expr, kind, ty) ->
       str "(Cast " ++
       (pp_term env evdref expr) ++ spc () ++
       str (match kind with
@@ -140,7 +132,7 @@ and pp_term_content env evdref term =
       | Constr.DEFAULTcast -> "DEFAULT"
       | Constr.REVERTcast -> "REVERT") ++ spc () ++
       (pp_term env evdref ty) ++ str ")"
-  | Term.Prod (name, ty, body) ->
+  | Constr.Prod (name, ty, body) ->
       let decl = Context.Rel.Declaration.LocalAssum (name, ty) in
       let env2 = EConstr.push_rel decl env in
       str "(Prod" ++ spc () ++
@@ -148,7 +140,7 @@ and pp_term_content env evdref term =
         str (string_of_name name) ++ spc () ++
         (pp_term env evdref ty)) ++ spc () ++
       (pp_term env2 evdref body) ++ str ")"
-  | Term.Lambda (name, ty, body) ->
+  | Constr.Lambda (name, ty, body) ->
       let decl = Context.Rel.Declaration.LocalAssum (name, ty) in
       let env2 = EConstr.push_rel decl env in
       str "(Lambda" ++ spc () ++
@@ -156,7 +148,7 @@ and pp_term_content env evdref term =
         str (string_of_name name) ++ spc () ++
         (pp_term env evdref ty)) ++ spc () ++
       (pp_term env2 evdref body) ++ str ")"
-  | Term.LetIn (name, expr, ty, body) ->
+  | Constr.LetIn (name, expr, ty, body) ->
       let decl = Context.Rel.Declaration.LocalDef (name, expr, ty) in
       let env2 = EConstr.push_rel decl env in
       str "(Let" ++ spc () ++
@@ -165,18 +157,18 @@ and pp_term_content env evdref term =
         (pp_term env evdref ty)) ++ spc () ++
       (pp_term env evdref expr) ++ spc () ++
       (pp_term env2 evdref body) ++ str ")"
-  | Term.App (f, argsary) ->
+  | Constr.App (f, argsary) ->
       let pp = str "(App" ++ spc () ++ (pp_term env evdref f) in
       (List.fold_left
         (fun pp a -> pp ++ spc () ++ pp_term env evdref a)
         pp (Array.to_list argsary)) ++
       str ")"
-  | Term.Const cu ->
+  | Constr.Const cu ->
       let (c, _) = cu in (* strip EConstr.EInstance.t *)
       str "(Const" ++ spc () ++
       str (Constant.to_string c) ++
       str ")"
-  | Term.Ind iu ->
+  | Constr.Ind iu ->
       let ((mutind, i), _) = iu in (* strip EConstr.EInstance.t *)
       let env = Global.env () in
       let mind_body = Environ.lookup_mind mutind env in
@@ -186,7 +178,7 @@ and pp_term_content env evdref term =
       str (MutInd.to_string mutind) ++ spc () ++
       int i ++ spc () ++
       Id.print ind_id ++ str ")"
-  | Term.Construct cu ->
+  | Constr.Construct cu ->
       let (((mutind, i), j), _) = cu in (* strip EConstr.EInstance.t *)
       let env = Global.env () in
       let mind_body = Environ.lookup_mind mutind env in
@@ -199,7 +191,7 @@ and pp_term_content env evdref term =
       int j ++ spc () ++
       Id.print ind_id ++ spc () ++
       Id.print cons_id ++ str ")"
-  | Term.Case (ci, tyf, expr, brs) ->
+  | Constr.Case (ci, tyf, expr, brs) ->
       let pp =
         str "(Case" ++ spc () ++
         hv 2 (pp_ci_info ci) ++ spc () ++
@@ -209,7 +201,7 @@ and pp_term_content env evdref term =
       (List.fold_left
         (fun pp br -> pp ++ spc () ++ pp_term env evdref br)
         pp (Array.to_list brs)) ++ str ")"
-  | Term.Fix arg ->
+  | Constr.Fix arg ->
       let ((ia, i), (nameary, tyary, funary)) = arg in
       let env2 = push_rec_types env !evdref (nameary, tyary, funary) in
       let pp = str "(Fix" ++ spc () ++ str (string_of_name (Array.get nameary i)) in
@@ -228,7 +220,7 @@ and pp_term_content env evdref term =
             (pp_term env2 evdref f) ++ str ")"))
         pp (iota_list 0 (Array.length funary)) ++
       str ")"
-  | Term.CoFix arg ->
+  | Constr.CoFix arg ->
       let (i, (nameary, tyary, funary)) = arg in
       let env2 = push_rec_types env !evdref (nameary, tyary, funary) in
       let l2 = List.fold_right2
@@ -249,7 +241,7 @@ and pp_term_content env evdref term =
           (pp_term env2 evdref f) ++ str ")"))
         pp l3 ++
       str ")"
-  | Term.Proj (proj, expr) ->
+  | Constr.Proj (proj, expr) ->
       str "(Proj" ++ spc () ++
       str (Projection.to_string proj) ++ spc () ++
       (pp_term env evdref expr) ++ str ")"
@@ -325,7 +317,7 @@ let print_type (term : Constrexpr.constr_expr) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Pfedit.get_current_context () in
   let evdref = ref sigma in
   let ((term3 : EConstr.constr), (_ : UState.t)) = Constrintern.interp_constr env sigma term in
-  let ty = Typing.e_type_of env evdref term3 in
+  let ty = Retyping.get_type_of env !evdref term3 in
   Feedback.msg_info (pp_term env evdref ty)
 
 let print_term_type_n (n : int) (expr : Constrexpr.constr_expr) =
@@ -335,14 +327,14 @@ let print_term_type_n (n : int) (expr : Constrexpr.constr_expr) =
   Feedback.msg_info (pp_term env evdref term2);
   let termref = ref term2 in
   for _ = 1 to n do
-    termref := Typing.e_type_of env evdref !termref;
+    termref := Retyping.get_type_of env !evdref !termref;
     Feedback.msg_info (pp_term env evdref !termref)
   done
 
 let print_term_type (term : Constrexpr.constr_expr) =
   print_term_type_n 1 term
 
-let print_global (name : Libnames.reference) =
+let print_global (name : Libnames.qualid) =
   let ((sigma : Evd.evar_map), (env : Environ.env)) = Pfedit.get_current_context () in
   let evdref = ref sigma in
   let reference = Smartlocate.global_with_alias name in

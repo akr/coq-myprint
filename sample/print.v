@@ -289,7 +289,7 @@ PrintGlobal add2.
 
 PrintTerm (1 = 1). (* (App ...) *)
 Unset MyPrint ShowProp.
-PrintTerm (1 = 1). (* <Prop> *)
+PrintTerm (1 = 1). (* <prop> *)
 
 Require Recdef.
 
