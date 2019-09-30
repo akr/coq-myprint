@@ -292,10 +292,11 @@ let pp_ind env sigma ind =
     spc () ++ str "mind_ntypes=" ++ int mutind_body.Declarations.mind_ntypes ++
     spc () ++ str "mind_nparams=" ++ int mutind_body.Declarations.mind_nparams ++
     spc () ++ str "mind_nparams_rec=" ++ int mutind_body.Declarations.mind_nparams_rec ++
-    pp_prejoin_list (spc ())
-      (List.map
-        (pp_context_rel_decl env sigma)
-        mutind_body.Declarations.mind_params_ctxt) ++
+    spc () ++ hv 2 (str "mind_params_ctxt=[" ++
+      pp_join_list (spc ())
+        (List.map
+          (pp_context_rel_decl env sigma)
+          mutind_body.Declarations.mind_params_ctxt) ++ str "]") ++
     pp_prejoin_ary (spc ())
       (Array.map
         (fun oneind_body ->
