@@ -327,21 +327,19 @@ let obtain_env_sigma pstate =
 
 let print_term pstate (term : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
-  let evdref = ref sigma in
-  let ((term3 : EConstr.constr), (_ : UState.t)) = Constrintern.interp_constr env sigma term in
-  Feedback.msg_info (pp_term env evdref term3)
+  let (sigma, (term3 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma term in
+  Feedback.msg_info (pp_term env (ref sigma) term3)
 
 let print_type pstate (term : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
-  let evdref = ref sigma in
-  let ((term3 : EConstr.constr), (_ : UState.t)) = Constrintern.interp_constr env sigma term in
-  let ty = Retyping.get_type_of env !evdref term3 in
-  Feedback.msg_info (pp_term env evdref ty)
+  let (sigma, (term3 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma term in
+  let ty = Retyping.get_type_of env sigma term3 in
+  Feedback.msg_info (pp_term env (ref sigma) ty)
 
 let print_term_type_n pstate (n : int) (expr : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
+  let (sigma, (term2 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma expr in
   let evdref = ref sigma in
-  let ((term2 : EConstr.constr), (_ : UState.t)) = Constrintern.interp_constr env sigma expr in
   Feedback.msg_info (pp_term env evdref term2);
   let termref = ref term2 in
   for _ = 1 to n do
