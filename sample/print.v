@@ -32,6 +32,62 @@ PrintTerm MC12. (* (Construct print.MutInd1 0 2 MutInd1 MC12) *)
 PrintTerm MC21. (* (Construct print.MutInd1 1 1 MutInd2 MC21) *)
 PrintTerm MC22. (* (Construct print.MutInd1 1 2 MutInd2 MC22) *)
 
+PrintGlobal MutInd1.
+(*
+(MutInd
+  MutInd1
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=2
+  mind_nparams=0
+  mind_nparams_rec=0
+  mind_params_ctxt=[]
+  (MutInd1
+    mind_arity_ctxt=[]
+    mind_user_lc=[(MC11 MutInd1) (MC12 (MutInd2 -> MutInd1))]
+    mind_nf_lc=[(MC11 MutInd1) (MC12 (MutInd2 -> MutInd1))]
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1])
+  (MutInd2
+    mind_arity_ctxt=[]
+    mind_user_lc=[(MC21 MutInd2) (MC22 (MutInd1 -> MutInd2))]
+    mind_nf_lc=[(MC21 MutInd2) (MC22 (MutInd1 -> MutInd2))]
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1]))
+*)
+PrintGlobal MutInd2.
+(*
+(MutInd
+  MutInd2
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=2
+  mind_nparams=0
+  mind_nparams_rec=0
+  mind_params_ctxt=[]
+  (MutInd1
+    mind_arity_ctxt=[]
+    mind_user_lc=[(MC11 MutInd1) (MC12 (MutInd2 -> MutInd1))]
+    mind_nf_lc=[(MC11 MutInd1) (MC12 (MutInd2 -> MutInd1))]
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1])
+  (MutInd2
+    mind_arity_ctxt=[]
+    mind_user_lc=[(MC21 MutInd2) (MC22 (MutInd1 -> MutInd2))]
+    mind_nf_lc=[(MC21 MutInd2) (MC22 (MutInd1 -> MutInd2))]
+    mind_nrealargs=0
+    mind_nrealdecls=0
+    mind_consnrealargs=[0 1]
+    mind_consnrealdecls=[0 1]))
+*)
+
+
 PrintTerm list nat.
 (* (App (Ind Coq.Init.Datatypes.list 0 list) (Ind Coq.Init.Datatypes.nat 0 nat)) *)
 
@@ -158,7 +214,8 @@ PrintGlobal LetInCstr.
   mind_params_ctxt=[(T:Type)]
   (LetInCstr
     mind_arity_ctxt=[(T:Type)]
-    (lic (forall T : Type, let LT := list T in LT -> LetInCstr T))
+    mind_user_lc=[(lic (forall T : Type, let LT := list T in LT -> LetInCstr T))]
+    mind_nf_lc=[(lic (forall T : Type, let LT := list T in LT -> LetInCstr T))]
     mind_nrealargs=0
     mind_nrealdecls=0
     mind_consnrealargs=[1]
@@ -185,16 +242,20 @@ PrintGlobal I1.
   mind_params_ctxt=[(T2:Type) (T1:Type)]
   (I1
     mind_arity_ctxt=[(_:Type) (T2:Type) (T1:Type)]
-    (c11 (forall T1 T2 : Type, I1 T1 T2 T1))
-    (c12 (forall T1 T2 : Type, I2 T1 T2 T2 -> I1 T1 T2 T1))
+    mind_user_lc=[(c11 (forall T1 T2 : Type, I1 T1 T2 T1))
+      (c12 (forall T1 T2 : Type, I2 T1 T2 T2 -> I1 T1 T2 T1))]
+    mind_nf_lc=[(c11 (forall T1 T2 : Type, I1 T1 T2 T1))
+      (c12 (forall T1 T2 : Type, I2 T1 T2 T2 -> I1 T1 T2 T1))]
     mind_nrealargs=1
     mind_nrealdecls=1
     mind_consnrealargs=[0 1]
     mind_consnrealdecls=[0 1])
   (I2
     mind_arity_ctxt=[(_:Type) (T2:Type) (T1:Type)]
-    (c21 (forall T1 T2 : Type, I2 T1 T2 T2))
-    (c22 (forall T1 T2 : Type, I1 T1 T2 T1 -> I2 T1 T2 T2))
+    mind_user_lc=[(c21 (forall T1 T2 : Type, I2 T1 T2 T2))
+      (c22 (forall T1 T2 : Type, I1 T1 T2 T1 -> I2 T1 T2 T2))]
+    mind_nf_lc=[(c21 (forall T1 T2 : Type, I2 T1 T2 T2))
+      (c22 (forall T1 T2 : Type, I1 T1 T2 T1 -> I2 T1 T2 T2))]
     mind_nrealargs=1
     mind_nrealdecls=1
     mind_consnrealargs=[0 1]
@@ -206,7 +267,7 @@ Inductive I3 (T1 : Type) (T2 : Type) : Type :=
 | c32 : I3 T1 bool -> I3 T1 T2.
 
 PrintGlobal I3.
-(* mind_nparams_rec=1 because 2nd parameter is not always T2
+(* mind_nparams_rec=1 != mind_nparams=2 because 2nd parameter is not always T2
 (MutInd
   I3
   mind_record=NotRecord
@@ -217,8 +278,10 @@ PrintGlobal I3.
   mind_params_ctxt=[(T2:Type) (T1:Type)]
   (I3
     mind_arity_ctxt=[(T2:Type) (T1:Type)]
-    (c31 (forall T1 T2 : Type, I3 T1 T2))
-    (c32 (forall T1 T2 : Type, I3 T1 bool -> I3 T1 T2))
+    mind_user_lc=[(c31 (forall T1 T2 : Type, I3 T1 T2))
+      (c32 (forall T1 T2 : Type, I3 T1 bool -> I3 T1 T2))]
+    mind_nf_lc=[(c31 (forall T1 T2 : Type, I3 T1 T2))
+      (c32 (forall T1 T2 : Type, I3 T1 bool -> I3 T1 T2))]
     mind_nrealargs=0
     mind_nrealdecls=0
     mind_consnrealargs=[0 1]
@@ -230,7 +293,7 @@ Inductive I4 (T1 : Type) (T2 : Type) : Type :=
 | c42 : I4 bool T2 -> I4 T1 T2.
 
 PrintGlobal I4.
-(* mind_nparams_rec=0 because 1st parameter is not always T1
+(* mind_nparams_rec=0 != mind_nparams=2 because 1st parameter is not always T1
 (MutInd
   I4
   mind_record=NotRecord
@@ -241,8 +304,10 @@ PrintGlobal I4.
   mind_params_ctxt=[(T2:Type) (T1:Type)]
   (I4
     mind_arity_ctxt=[(T2:Type) (T1:Type)]
-    (c41 (forall T1 T2 : Type, I4 T1 T2))
-    (c42 (forall T1 T2 : Type, I4 bool T2 -> I4 T1 T2))
+    mind_user_lc=[(c41 (forall T1 T2 : Type, I4 T1 T2))
+      (c42 (forall T1 T2 : Type, I4 bool T2 -> I4 T1 T2))]
+    mind_nf_lc=[(c41 (forall T1 T2 : Type, I4 T1 T2))
+      (c42 (forall T1 T2 : Type, I4 bool T2 -> I4 T1 T2))]
     mind_nrealargs=0
     mind_nrealdecls=0
     mind_consnrealargs=[0 1]
@@ -265,10 +330,18 @@ PrintGlobal I5.
   mind_params_ctxt=[(T2:Type) (Ts:Type:=(list I5)) (T1:Type)]
   (I5
     mind_arity_ctxt=[(T2:Type) (Ts:Type:=(list I5)) (T1:Type)]
-    (c51 (forall T1 : Type, let Ts := list T1 in forall T2 : Type, I5 T1 T2))
-    (c52
-      (forall T1 : Type,
-       let Ts := list T1 in forall T2 : Type, I5 T1 T2 -> I5 T1 T2))
+    mind_user_lc=[(c51
+                    (forall T1 : Type,
+                     let Ts := list T1 in forall T2 : Type, I5 T1 T2))
+      (c52
+        (forall T1 : Type,
+         let Ts := list T1 in forall T2 : Type, I5 T1 T2 -> I5 T1 T2))]
+    mind_nf_lc=[(c51
+                  (forall T1 : Type,
+                   let Ts := list T1 in forall T2 : Type, I5 T1 T2))
+      (c52
+        (forall T1 : Type,
+         let Ts := list T1 in forall T2 : Type, I5 T1 T2 -> I5 T1 T2))]
     mind_nrealargs=0
     mind_nrealdecls=0
     mind_consnrealargs=[0 1]
@@ -295,11 +368,57 @@ PrintGlobal I6.
       (T2:Type)
       (L1:nat:=1)
       (T1:Type)]
-    (c6 (forall T1 : Type, let L1 := 1 in forall T2 : Type, I6 T1 T2 nat nat))
+    mind_user_lc=[(c6
+                    (forall T1 : Type,
+                     let L1 := 1 in forall T2 : Type, I6 T1 T2 nat nat))]
+    mind_nf_lc=[(c6
+                  (forall T1 : Type,
+                   let L1 := 1 in forall T2 : Type, I6 T1 T2 nat nat))]
     mind_nrealargs=2
     mind_nrealdecls=3
     mind_consnrealargs=[0]
     mind_consnrealdecls=[0]))
+*)
+
+Inductive I7 (T1:id Type) (L1:=(1+2)%nat) (T2:id Type) :
+    forall (T3:id Type) (L2:=(2+3)%nat) (T4: id Type), id Type :=
+| c7 : id (forall (T5 : id Type) (L3:=(3+4)%nat) (T6 : id Type),
+         id (I7 T1 T2 (id T5) (id T6))).
+
+PrintGlobal I7.
+(*
+(MutInd
+  I7
+  mind_record=NotRecord
+  mind_finite=Finite
+  mind_ntypes=1
+  mind_nparams=2
+  mind_nparams_rec=2
+  mind_params_ctxt=[(T2:(id Type)) (L1:nat:=(1 + 2)) (T1:(id Type))]
+  (I7
+    mind_arity_ctxt=[(T4:(id Type))
+      (L2:nat:=(2 + 3))
+      (T3:(id Type))
+      (T2:(id Type))
+      (L1:nat:=(1 + 2))
+      (T1:(id Type))]
+    mind_user_lc=[(c7
+                    (forall T1 : id Type,
+                     let L1 := 1 + 2 in
+                     forall T2 : id Type,
+                     id
+                       (forall T5 : id Type,
+                        let L3 := 3 + 4 in
+                        forall T6 : id Type, id (I7 T1 T2 (id T5) (id T6)))))]
+    mind_nf_lc=[(c7
+                  (forall T1 : id Type,
+                   let L1 := 1 + 2 in
+                   forall T2 T5 : id Type,
+                   let L3 := 3 + 4 in forall T6 : id Type, I7 T1 T2 (id T5) (id T6)))]
+    mind_nrealargs=2
+    mind_nrealdecls=3
+    mind_consnrealargs=[2]
+    mind_consnrealdecls=[3]))
 *)
 
 PrintTerm fix f x := match x with O => 0 | S y => f y end.
@@ -378,7 +497,8 @@ PrintGlobal Stream.
   mind_params_ctxt=[]
   (Stream
     mind_arity_ctxt=[]
-    (Seq (nat -> Stream -> Stream))
+    mind_user_lc=[(Seq (nat -> Stream -> Stream))]
+    mind_nf_lc=[(Seq (nat -> Stream -> Stream))]
     mind_nrealargs=0
     mind_nrealdecls=0
     mind_consnrealargs=[2]
@@ -388,16 +508,14 @@ PrintGlobal Stream.
 PrintTerm cofix from (n:nat) : Stream := Seq n (from (S n)).
 (*
 (CoFix
-  0
-  from (Prod n (Ind Coq.Init.Datatypes.nat 0 nat) (Ind Top.Stream 0 Stream))
-    (Lambda
-      n (Ind Coq.Init.Datatypes.nat 0 nat)
-      (App
-        (Construct Top.Stream 0 1 Stream Seq)
-        (Rel 1)
-        (App
-          (Rel 2)
-          (App (Construct Coq.Init.Datatypes.nat 0 2 nat S) (Rel 1)))))))
+  from
+  (from (Prod n (Ind Coq.Init.Datatypes.nat 0 nat) (Ind print.Stream 0 Stream))
+     (Lambda
+       n (Ind Coq.Init.Datatypes.nat 0 nat)
+       (App
+         (Construct print.Stream 0 1 Stream Seq)
+         (Rel 1)
+         (App (Rel 2) (App (Construct Coq.Init.Datatypes.nat 0 2 nat S) (Rel 1)))))))
 *)
 
 Set Primitive Projections. (* enables Proj *)
@@ -484,5 +602,5 @@ PrintGlobal addx.
 PrintGlobal addx_terminate.
 
 Require Import Int63.
-PrintTerm 0%int63.
-PrintGlobal Int63.max_int.
+PrintTerm 0%int63. (* (Int 0) *)
+PrintGlobal Int63.max_int. (* (Int 9223372036854775807) *)

@@ -306,16 +306,35 @@ let pp_ind env sigma ind =
               (List.map
                 (pp_context_rel_decl env sigma)
                 oneind_body.Declarations.mind_arity_ctxt) ++ str "]") ++
-          pp_prejoin_ary (spc ())
-            (Array.map2
-              (fun consname user_lc ->
-                hv 2 (str "(" ++
-                str (Id.to_string consname) ++ spc () ++
-                Printer.pr_constr_env env sigma user_lc ++
-                str ")")
-              )
-              oneind_body.Declarations.mind_consnames
-              oneind_body.Declarations.mind_user_lc) ++
+          spc () ++ hv 2 (str "mind_user_lc=[" ++
+            pp_join_ary (spc ())
+              (Array.map2
+                (fun consname user_lc ->
+                  hv 2 (str "(" ++
+                  str (Id.to_string consname) ++ spc () ++
+                  Printer.pr_constr_env env sigma user_lc ++
+                  str ")")
+                )
+                oneind_body.Declarations.mind_consnames
+                oneind_body.Declarations.mind_user_lc) ++ str "]") ++
+          spc () ++ hv 2 (str "mind_nf_lc=[" ++
+            pp_join_ary (spc ())
+              (Array.map2
+                (fun consname nf_lc ->
+                  let ((ctx : Constr.rel_context), (t : Constr.t)) = nf_lc in
+                  let t = Context.Rel.fold_inside
+                            (fun (t : Constr.t) (decl : Constr.rel_declaration) ->
+                              match decl with
+                              | Context.Rel.Declaration.LocalAssum (name, ty) -> Constr.mkProd (name, ty, t)
+                              | Context.Rel.Declaration.LocalDef (name, expr, ty) -> Constr.mkLetIn (name, expr, ty, t))
+                            ~init:t ctx in
+                  hv 2 (str "(" ++
+                  str (Id.to_string consname) ++ spc () ++
+                  Printer.pr_constr_env env sigma t ++
+                  str ")")
+                )
+                oneind_body.Declarations.mind_consnames
+                oneind_body.Declarations.mind_nf_lc) ++ str "]") ++
           spc () ++ str "mind_nrealargs=" ++ int oneind_body.Declarations.mind_nrealargs ++
           spc () ++ str "mind_nrealdecls=" ++ int oneind_body.Declarations.mind_nrealdecls ++
           spc () ++ str "mind_consnrealargs=[" ++ hv 2 (pp_join_ary (spc ()) (Array.map int oneind_body.Declarations.mind_consnrealargs)) ++ str "]" ++
