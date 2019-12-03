@@ -386,6 +386,57 @@ let print_global pstate (name : Libnames.qualid) =
   | IndRef ind -> Feedback.msg_info (pp_ind env sigma ind)
   | ConstructRef _ -> user_err (str "can't print ConstructRef")
 
+let rec pp_constr_expr (c : Constrexpr.constr_expr) =
+  match CAst.with_val (fun x -> x) c with
+  | Constrexpr.CRef (qid,iexpr_opt) ->
+      str "(CRef" ++ spc () ++
+      Ppconstr.pr_qualid qid ++
+      str ")"
+  | Constrexpr.CFix _ -> str "(CFix)"
+  | Constrexpr.CCoFix _ -> str "(CCoFix)"
+  | Constrexpr.CProdN _ -> str "(CProdN)"
+  | Constrexpr.CLambdaN _ -> str "(CLambdaN)"
+  | Constrexpr.CLetIn _ -> str "(CLetIn)"
+  | Constrexpr.CAppExpl ((projflag, qid, iexpr_opt), args) ->
+      str "(CAppExpl" ++
+      (match projflag with | None -> mt () | Some i -> spc () ++ str "projflag=" ++ int i) ++
+      spc () ++
+      Ppconstr.pr_qualid qid ++
+      pp_prejoin_list (spc ())
+        (List.map (fun arg -> pp_constr_expr arg) args) ++
+      str ")"
+  | Constrexpr.CApp ((projflag, f), args) ->
+      str "(CApp" ++
+      (match projflag with | None -> mt () | Some i -> spc () ++ str "projflag=" ++ int i) ++
+      spc () ++
+      pp_constr_expr f ++
+      pp_prejoin_list (spc ())
+        (List.map (fun (arg, ex_opt) ->
+          match ex_opt with
+          | None -> pp_constr_expr arg
+          | Some ex ->
+              match CAst.with_val (fun x -> x) ex with
+              | Constrexpr.ExplByPos _ -> str "ExplByPos" (* not implemented *)
+              | Constrexpr.ExplByName id -> Id.print id ++ str ":=" ++ pp_constr_expr arg)
+        args) ++
+      str ")"
+  | Constrexpr.CRecord _ -> str "(CRecord)"
+  | Constrexpr.CCases _ -> str "(CCases)"
+  | Constrexpr.CLetTuple _ -> str "(CLetTuple)"
+  | Constrexpr.CIf _ -> str "(CIf)"
+  | Constrexpr.CHole _ -> str "(CHole)"
+  | Constrexpr.CPatVar _ -> str "(CPatVar)"
+  | Constrexpr.CEvar _ -> str "(CEvar)"
+  | Constrexpr.CSort _ -> str "(CSort)"
+  | Constrexpr.CCast _ -> str "(CCast)"
+  | Constrexpr.CNotation _ -> str "(CNotation)"
+  | Constrexpr.CGeneralization _ -> str "(CGeneralization)"
+  | Constrexpr.CPrim _ -> str "(CPrim)"
+  | Constrexpr.CDelimiters _ -> str "(CDelimiters)"
+
+let print_constr_expr pstate (term : Constrexpr.constr_expr) =
+  Feedback.msg_info (pp_constr_expr term)
+
 let xhh_escape_string s =
   let len = String.length s in
   let buf = Buffer.create len in
