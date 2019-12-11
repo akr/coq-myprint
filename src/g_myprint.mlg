@@ -23,6 +23,7 @@ VERNAC COMMAND EXTEND Myprint CLASSIFIED AS QUERY
     | ![ proof ] [ "PrintTermTypeN" int(n) lconstr(term) ] -> { fun ~pstate ->  print_term_type_n pstate n term; pstate }
     | ![ proof ] [ "PrintGlobal" global(name) ] -> { fun ~pstate -> print_global pstate name; pstate }
     | ![ proof ] [ "PrintConstrExpr" lconstr(term) ] -> { fun ~pstate -> print_constr_expr pstate term; pstate }
+    | ![ proof ] [ "PrintRec" global(name) ] -> { fun ~pstate -> print_rec pstate name; pstate }
     | [ "PrintEscape" ident(id) ] -> { print_escape id }
 END
 

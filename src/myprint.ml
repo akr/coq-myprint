@@ -453,3 +453,67 @@ let print_escape (id : Id.t) =
   let s = Id.to_string id in
   Feedback.msg_info (str (xhh_escape_string s))
 
+let detect_recursive_functions (ctnt_i : Constant.t) : (int * Constant.t option array) option =
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
+  let modpath = KerName.modpath (Constant.canonical ctnt_i) in
+  match Global.body_of_constant ctnt_i with
+  | None -> user_err (Pp.str "couldn't obtain the definition of" ++ Pp.spc () ++
+                      Printer.pr_constant env ctnt_i)
+  | Some (def_i,_) ->
+      let def_i = EConstr.of_constr def_i in
+      let (ctx_rel_i, body_i) = EConstr.decompose_lam_assum sigma def_i in
+      match EConstr.kind sigma body_i with
+      | Constr.Fix ((ia, i), (nary, tary, fary)) ->
+          let ctnt_ary =
+            Array.mapi (fun j nm ->
+              if j = i then
+                Some ctnt_i
+              else
+                let nm = Context.binder_name nm in
+                match nm with
+                | Name.Anonymous -> None
+                | Name.Name id ->
+                    let label = Label.of_id id in
+                    let ctnt_j = Constant.make1 (KerName.make modpath label) in
+                    try
+                      match Global.body_of_constant ctnt_j with
+                      | None -> None
+                      | Some (def_j,_) ->
+                          let def_j = EConstr.of_constr def_j in
+                          let body_j' = EConstr.mkFix ((ia, j), (nary, tary, fary)) in
+                          let def_j' = EConstr.it_mkLambda_or_LetIn body_j' ctx_rel_i in
+                          if EConstr.eq_constr sigma def_j def_j' then
+                            Some ctnt_j
+                          else
+                            None
+                    with Not_found -> None)
+            nary
+          in
+          Some (i, ctnt_ary)
+      | _ -> None
+
+let print_rec pstate (name : Libnames.qualid) =
+  let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
+  let reference = Smartlocate.global_with_alias name in
+  match reference with
+  | ConstRef c ->
+      (match detect_recursive_functions c with
+      | None -> Feedback.msg_info (Pp.str "No recursive function detected")
+      | Some (i, ctnt_ary) ->
+          Feedback.msg_info
+            (Pp.str "Found recursive function: index=" ++ Pp.int i);
+          Array.iteri (fun j ctnt_j_opt ->
+            match ctnt_j_opt with
+            | None -> Feedback.msg_info
+                (Pp.str "Mutually recursive function" ++ Pp.spc () ++
+                 Pp.str "(" ++ Pp.int j ++ Pp.str ") not found")
+            | Some ctnt_j ->
+                      Feedback.msg_info
+                (Pp.str "Mutually recursive function" ++ Pp.spc () ++
+                 Pp.str"(" ++ Pp.int j ++ Pp.str ") found:" ++ Pp.spc () ++
+                 Printer.pr_constant env ctnt_j))
+            ctnt_ary)
+  | VarRef _ -> user_err (str "can't print VarRef")
+  | IndRef ind -> Feedback.msg_info (pp_ind env sigma ind)
+  | ConstructRef _ -> user_err (str "can't print ConstructRef")
