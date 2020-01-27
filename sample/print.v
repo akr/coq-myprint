@@ -523,10 +523,68 @@ Record Foo : Set := mkFoo { field : nat }.
 PrintTerm field (mkFoo 0).
 (*
 (Proj
-  Top.field
+  print.field(npars=0,arg=0)
   (App
-    (Construct Top.Foo 0 1 Foo mkFoo)
+    (Construct print.Foo 0 1 Foo mkFoo)
     (Construct Coq.Init.Datatypes.nat 0 1 nat O)))
+*)
+
+Record Bar : Set := mkBar { field0 : nat; field1 : nat }.
+PrintTerm field0 (mkBar 0 1).
+(*
+(Proj
+  print.field0(npars=0,arg=0)
+  (App
+    (Construct print.Bar 0 1 Bar mkBar)
+    (Construct Coq.Init.Datatypes.nat 0 1 nat O)
+    (App
+      (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+      (Construct Coq.Init.Datatypes.nat 0 1 nat O))))
+*)
+PrintTerm field1 (mkBar 0 1).
+(*
+(Proj
+  print.field1(npars=0,arg=1)
+  (App
+    (Construct print.Bar 0 1 Bar mkBar)
+    (Construct Coq.Init.Datatypes.nat 0 1 nat O)
+    (App
+      (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+      (Construct Coq.Init.Datatypes.nat 0 1 nat O))))
+*)
+
+Record Baz (par:nat) : Set := mkBaz { baz0 : nat; baz1 : nat }.
+PrintTerm baz0 0 (mkBaz 0 1 2).
+(*
+(Proj
+  print.baz0(npars=1,arg=0)
+  (App
+    (Construct print.Baz 0 1 Baz mkBaz)
+    (Construct Coq.Init.Datatypes.nat 0 1 nat O)
+    (App
+      (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+      (Construct Coq.Init.Datatypes.nat 0 1 nat O))
+    (App
+      (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+      (App
+        (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+        (Construct Coq.Init.Datatypes.nat 0 1 nat O)))))
+*)
+PrintTerm baz1 0 (mkBaz 0 1 2).
+(*
+(Proj
+  print.baz1(npars=1,arg=1)
+  (App
+    (Construct print.Baz 0 1 Baz mkBaz)
+    (Construct Coq.Init.Datatypes.nat 0 1 nat O)
+    (App
+      (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+      (Construct Coq.Init.Datatypes.nat 0 1 nat O))
+    (App
+      (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+      (App
+        (Construct Coq.Init.Datatypes.nat 0 2 nat S)
+        (Construct Coq.Init.Datatypes.nat 0 1 nat O)))))
 *)
 
 Section Sec.

@@ -250,7 +250,10 @@ and pp_term_content env sigma term =
       str ")"
   | Constr.Proj (proj, expr) ->
       str "(Proj" ++ spc () ++
-      str (Projection.to_string proj) ++ spc () ++
+      str (Projection.to_string proj) ++
+      str "(" ++
+      str "npars=" ++ int (Projection.npars proj) ++ str "," ++
+      str "arg=" ++ int (Projection.arg proj) ++ str ")" ++ spc () ++
       (pp_term env sigma expr) ++ str ")"
   | Constr.Int n ->
       str "(Int" ++ spc () ++
