@@ -115,7 +115,9 @@ let rec pp_term env sigma term =
               pp_term_content env sigma term)
 and pp_term_content env sigma term =
   match EConstr.kind sigma term with
-  | Constr.Rel i -> str "(Rel" ++ spc () ++ int i ++ str ")"
+  | Constr.Rel i ->
+      let name = Context.Rel.Declaration.get_name (Environ.lookup_rel i env) in
+      str "(Rel" ++ spc () ++ int i ++ spc () ++ (Name.print name) ++ str ")"
   | Constr.Var name -> str "(Var" ++ spc () ++ str (Id.to_string name) ++ str ")"
   | Constr.Meta i -> str "(Meta" ++ spc () ++ int i ++ str ")"
   | Constr.Evar (ekey, termary) ->

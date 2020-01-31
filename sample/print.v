@@ -1,7 +1,7 @@
 Require Import myprint.myprint.
 
 PrintTerm (fun (x:nat) => x).
-(* (Lambda x (Ind Coq.Init.Datatypes.nat 0) (Rel 1)) *)
+(* (Lambda x (Ind Coq.Init.Datatypes.nat 0 nat) (Rel 1 x)) *)
 
 PrintTerm plus.
 (* (Const Coq.Init.Nat.add) *)
@@ -111,16 +111,13 @@ PrintTerm cons true nil.
 *)
 
 PrintTerm fun (T : Set) (x : T) => x.
-(* (Lambda T (Sort Set) (Lambda x (Rel 1) (Rel 1))) *)
+(* (Lambda T (Sort Set) (Lambda x (Rel 1 T) (Rel 1 x))) *)
 
 PrintTerm fun (f : nat -> nat) (x : nat) => f x.
 (*
 (Lambda
-  f
-    (Prod
-      _ (Ind Coq.Init.Datatypes.nat 0 nat)
-      (Ind Coq.Init.Datatypes.nat 0 nat))
-  (Lambda x (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 2) (Rel 1))))
+  f (Prod _ (Ind Coq.Init.Datatypes.nat 0 nat) (Ind Coq.Init.Datatypes.nat 0 nat))
+  (Lambda x (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 2 f) (Rel 1 x))))
 *)
 
 PrintTerm O : nat.
@@ -144,8 +141,8 @@ PrintTerm forall (x : nat), x = x.
   (App
     (Ind Coq.Init.Logic.eq 0 eq)
     (Ind Coq.Init.Datatypes.nat 0 nat)
-    (Rel 1)
-    (Rel 1)))
+    (Rel 1 x)
+    (Rel 1 x)))
 *)
 
 PrintTerm let x := O in x.
@@ -153,24 +150,24 @@ PrintTerm let x := O in x.
 (Let
   x (Ind Coq.Init.Datatypes.nat 0 nat)
   (Construct Coq.Init.Datatypes.nat 0 1 nat O)
-  (Rel 1))
+  (Rel 1 x))
 *)
 
 PrintTerm let f := (fun (T : Type) (x : T) => x) in (f bool true, f nat 0).
 (*
 (Let
-  f (Prod T (Sort Type Top.1) (Prod x (Rel 1) (Rel 2)))
-  (Lambda T (Sort Type Top.1) (Lambda x (Rel 1) (Rel 1)))
+  f (Prod T (Sort Type print.5) (Prod x (Rel 1 T) (Rel 2 T)))
+  (Lambda T (Sort Type print.5) (Lambda x (Rel 1 T) (Rel 1 x)))
   (App
     (Construct Coq.Init.Datatypes.prod 0 1 prod pair)
     (Ind Coq.Init.Datatypes.bool 0 bool)
     (Ind Coq.Init.Datatypes.nat 0 nat)
     (App
-      (Rel 1)
+      (Rel 1 f)
       (Ind Coq.Init.Datatypes.bool 0 bool)
       (Construct Coq.Init.Datatypes.bool 0 1 bool true))
     (App
-      (Rel 1)
+      (Rel 1 f)
       (Ind Coq.Init.Datatypes.nat 0 nat)
       (Construct Coq.Init.Datatypes.nat 0 1 nat O))))
 *)
@@ -191,8 +188,8 @@ PrintTerm match O with O => false | S _ => true end.
 
 PrintTerm match tt with tt => 0 end.
 PrintTerm match (0,true) with (_,_) => 0 end.
-PrintTerm match (0,true) with (x,y) => x end. (* body x is (Rel 2) *)
-PrintTerm match (0,true) with (x,y) => y end. (* body y is (Rel 1) *)
+PrintTerm match (0,true) with (x,y) => x end. (* body x is (Rel 2 x) *)
+PrintTerm match (0,true) with (x,y) => y end. (* body y is (Rel 1 y) *)
 PrintTerm match true with true => 0 | false => 0 end.
 PrintTerm match O with O => false | S _ => true end.
 PrintTerm match (nil : list bool) with nil => 0 | cons h t => 0 end.
@@ -438,9 +435,9 @@ PrintTerm fix f x := match x with O => 0 | S y => f y end.
          (Lambda
            x (Ind Coq.Init.Datatypes.nat 0 nat)
            (Ind Coq.Init.Datatypes.nat 0 nat))
-         (Rel 1)
+         (Rel 1 x)
          (Construct Coq.Init.Datatypes.nat 0 1 nat O)
-         (Lambda y (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 3) (Rel 1)))))))
+         (Lambda y (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 3 f) (Rel 1 y)))))))
 *)
 
 PrintTerm fix f x := match x with O => 0 | S y => g y end
@@ -461,9 +458,9 @@ PrintTerm fix f x := match x with O => 0 | S y => g y end
          (Lambda
            x (Ind Coq.Init.Datatypes.nat 0 nat)
            (Ind Coq.Init.Datatypes.nat 0 nat))
-         (Rel 1)
+         (Rel 1 x)
          (Construct Coq.Init.Datatypes.nat 0 1 nat O)
-         (Lambda y (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 3) (Rel 1))))))
+         (Lambda y (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 3 g) (Rel 1 y))))))
   (g
      decarg=0
      (Prod u (Ind Coq.Init.Datatypes.nat 0 nat) (Ind Coq.Init.Datatypes.nat 0 nat))
@@ -477,9 +474,9 @@ PrintTerm fix f x := match x with O => 0 | S y => g y end
          (Lambda
            u (Ind Coq.Init.Datatypes.nat 0 nat)
            (Ind Coq.Init.Datatypes.nat 0 nat))
-         (Rel 1)
+         (Rel 1 u)
          (Construct Coq.Init.Datatypes.nat 0 1 nat O)
-         (Lambda v (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 4) (Rel 1)))))))
+         (Lambda v (Ind Coq.Init.Datatypes.nat 0 nat) (App (Rel 4 f) (Rel 1 v)))))))
 *)
 
 CoInductive Stream : Set := Seq : nat -> Stream -> Stream.
@@ -514,8 +511,10 @@ PrintTerm cofix from (n:nat) : Stream := Seq n (from (S n)).
        n (Ind Coq.Init.Datatypes.nat 0 nat)
        (App
          (Construct print.Stream 0 1 Stream Seq)
-         (Rel 1)
-         (App (Rel 2) (App (Construct Coq.Init.Datatypes.nat 0 2 nat S) (Rel 1)))))))
+         (Rel 1 n)
+         (App
+           (Rel 2 from)
+           (App (Construct Coq.Init.Datatypes.nat 0 2 nat S) (Rel 1 n)))))))
 *)
 
 Set Primitive Projections. (* enables Proj *)
@@ -615,7 +614,7 @@ PrintGlobal negb.
     (Lambda
       b (Ind Coq.Init.Datatypes.bool 0 bool)
       (Ind Coq.Init.Datatypes.bool 0 bool))
-    (Rel 1)
+    (Rel 1 b)
     (Construct Coq.Init.Datatypes.bool 0 2 bool false)
     (Construct Coq.Init.Datatypes.bool 0 1 bool true)))
 *)
