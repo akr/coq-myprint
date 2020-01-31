@@ -15,7 +15,6 @@ open Ltac_plugin
 open Extraargs
 }
 
-(* use "proof_opt_query" instead of "proof" for Coq 8.11 *)
 VERNAC COMMAND EXTEND Myprint CLASSIFIED AS QUERY
     | ![ proof_opt_query ] [ "PrintTerm" lconstr(term) ] -> { fun ~pstate -> print_term pstate term }
     | ![ proof_opt_query ] [ "PrintType" lconstr(term) ] -> { fun ~pstate -> print_type pstate term }
