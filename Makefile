@@ -7,6 +7,7 @@ Makefile.coq : _CoqProject
 clean :
 	rm -f \
 	  Makefile.coq \
+	  src/g_myprint.ml \
 	  src/*.o \ \
 	  src/*.cmi \
 	  src/*.cmo \
