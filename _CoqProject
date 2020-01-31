@@ -3,5 +3,5 @@
 -Q src myprint
 src/myprint.ml
 src/g_myprint.mlg
-src/myprint_plugin.mllib
+src/myprint_plugin.mlpack
 theories/myprint.v
