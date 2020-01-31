@@ -10,8 +10,11 @@
 *.cmi
 *.cmo
 *.vo
+*.vos
+*.vok
 *.glob
 *.d
 *.aux
+Makefile.coq.conf
 Makefile.coq
 src/g_myprint.ml
