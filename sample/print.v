@@ -662,3 +662,12 @@ PrintGlobal addx_terminate.
 Require Import Int63.
 PrintTerm 0%int63. (* (Int 0) *)
 PrintGlobal Int63.max_int. (* (Int 9223372036854775807) *)
+
+Require Floats.
+PrintGlobal PrimFloat.zero. (* (Float 0) *)
+PrintGlobal PrimFloat.neg_zero. (* (Float 0) *)
+PrintGlobal PrimFloat.one. (* (Float 1) *)
+PrintGlobal PrimFloat.two. (* (Float 2) *)
+PrintGlobal PrimFloat.nan. (* (Float nan) *)
+PrintGlobal PrimFloat.infinity. (* (Float inf) *)
+PrintGlobal PrimFloat.neg_infinity. (* (Float -inf) *)

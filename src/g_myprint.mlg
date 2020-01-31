@@ -17,13 +17,13 @@ open Extraargs
 
 (* use "proof_opt_query" instead of "proof" for Coq 8.11 *)
 VERNAC COMMAND EXTEND Myprint CLASSIFIED AS QUERY
-    | ![ proof ] [ "PrintTerm" lconstr(term) ] -> { fun ~pstate -> print_term pstate term; pstate }
-    | ![ proof ] [ "PrintType" lconstr(term) ] -> { fun ~pstate -> print_type pstate term; pstate }
-    | ![ proof ] [ "PrintTermType" lconstr(term) ] -> { fun ~pstate -> print_term_type pstate term; pstate }
-    | ![ proof ] [ "PrintTermTypeN" int(n) lconstr(term) ] -> { fun ~pstate ->  print_term_type_n pstate n term; pstate }
-    | ![ proof ] [ "PrintGlobal" global(name) ] -> { fun ~pstate -> print_global pstate name; pstate }
-    | ![ proof ] [ "PrintConstrExpr" lconstr(term) ] -> { fun ~pstate -> print_constr_expr pstate term; pstate }
-    | ![ proof ] [ "PrintRec" global(name) ] -> { fun ~pstate -> print_rec pstate name; pstate }
+    | ![ proof_opt_query ] [ "PrintTerm" lconstr(term) ] -> { fun ~pstate -> print_term pstate term }
+    | ![ proof_opt_query ] [ "PrintType" lconstr(term) ] -> { fun ~pstate -> print_type pstate term }
+    | ![ proof_opt_query ] [ "PrintTermType" lconstr(term) ] -> { fun ~pstate -> print_term_type pstate term }
+    | ![ proof_opt_query ] [ "PrintTermTypeN" int(n) lconstr(term) ] -> { fun ~pstate ->  print_term_type_n pstate n term }
+    | ![ proof_opt_query ] [ "PrintGlobal" global(name) ] -> { fun ~pstate -> print_global pstate name }
+    | ![ proof_opt_query ] [ "PrintConstrExpr" lconstr(term) ] -> { fun ~pstate -> print_constr_expr pstate term }
+    | ![ proof_opt_query ] [ "PrintRec" global(name) ] -> { fun ~pstate -> print_rec pstate name }
     | [ "PrintEscape" ident(id) ] -> { print_escape id }
 END
 

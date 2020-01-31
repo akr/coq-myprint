@@ -1,5 +1,5 @@
 open Names
-open Globnames
+open GlobRef
 open Pp
 open CErrors
 open Goptions
@@ -258,6 +258,9 @@ and pp_term_content env sigma term =
   | Constr.Int n ->
       str "(Int" ++ spc () ++
       str (Uint63.to_string n) ++ str ")"
+  | Constr.Float n ->
+      str "(Float" ++ spc () ++
+      str (Float64.to_string n) ++ str ")"
 
 let pp_name name =
   match name with
@@ -347,23 +350,23 @@ let pp_ind env sigma ind =
         mutind_body.Declarations.mind_packets) ++
     str ")")
 
-let obtain_env_sigma pstate =
+let obtain_env_sigma (pstate : Proof_global.t option) =
   match pstate with
   | Some pstate -> let (sigma, env) = Pfedit.get_current_context pstate in (env, sigma)
   | None -> let env = Global.env () in (env, Evd.from_env env)
 
-let print_term pstate (term : Constrexpr.constr_expr) =
+let print_term (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let (sigma, (term3 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma term in
   Feedback.msg_info (pp_term env sigma term3)
 
-let print_type pstate (term : Constrexpr.constr_expr) =
+let print_type (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let (sigma, (term3 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma term in
   let ty = Retyping.get_type_of env sigma term3 in
   Feedback.msg_info (pp_term env sigma ty)
 
-let print_term_type_n pstate (n : int) (expr : Constrexpr.constr_expr) =
+let print_term_type_n (pstate : Proof_global.t option) (n : int) (expr : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let (sigma, (term2 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma expr in
   Feedback.msg_info (pp_term env sigma term2);
@@ -373,16 +376,16 @@ let print_term_type_n pstate (n : int) (expr : Constrexpr.constr_expr) =
     Feedback.msg_info (pp_term env sigma !termref)
   done
 
-let print_term_type pstate (term : Constrexpr.constr_expr) =
+let print_term_type (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
   print_term_type_n pstate 1 term
 
-let print_global pstate (name : Libnames.qualid) =
+let print_global (pstate : Proof_global.t option) (name : Libnames.qualid) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let reference = Smartlocate.global_with_alias name in
   match reference with
   | ConstRef c ->
-     begin match Global.body_of_constant c with
-     | Some (b, _) -> Feedback.msg_info (pp_term env sigma (EConstr.of_constr b))
+     begin match Global.body_of_constant Library.indirect_accessor c with
+     | Some (b, _, _) -> Feedback.msg_info (pp_term env sigma (EConstr.of_constr b))
      | None -> user_err (str "can't print axiom")
      end
   | VarRef _ -> user_err (str "can't print VarRef")
@@ -437,7 +440,7 @@ let rec pp_constr_expr (c : Constrexpr.constr_expr) =
   | Constrexpr.CPrim _ -> str "(CPrim)"
   | Constrexpr.CDelimiters _ -> str "(CDelimiters)"
 
-let print_constr_expr pstate (term : Constrexpr.constr_expr) =
+let print_constr_expr (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
   Feedback.msg_info (pp_constr_expr term)
 
 let xhh_escape_string s =
@@ -460,10 +463,10 @@ let detect_recursive_functions (ctnt_i : Constant.t) : (int * Constant.t option 
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let modpath = KerName.modpath (Constant.canonical ctnt_i) in
-  match Global.body_of_constant ctnt_i with
+  match Global.body_of_constant Library.indirect_accessor ctnt_i with
   | None -> user_err (Pp.str "couldn't obtain the definition of" ++ Pp.spc () ++
                       Printer.pr_constant env ctnt_i)
-  | Some (def_i,_) ->
+  | Some (def_i,_,_) ->
       let def_i = EConstr.of_constr def_i in
       let (ctx_rel_i, body_i) = EConstr.decompose_lam_assum sigma def_i in
       match EConstr.kind sigma body_i with
@@ -480,9 +483,9 @@ let detect_recursive_functions (ctnt_i : Constant.t) : (int * Constant.t option 
                     let label = Label.of_id id in
                     let ctnt_j = Constant.make1 (KerName.make modpath label) in
                     try
-                      match Global.body_of_constant ctnt_j with
+                      match Global.body_of_constant Library.indirect_accessor ctnt_j with
                       | None -> None
-                      | Some (def_j,_) ->
+                      | Some (def_j,_,_) ->
                           let def_j = EConstr.of_constr def_j in
                           let body_j' = EConstr.mkFix ((ia, j), (nary, tary, fary)) in
                           let def_j' = EConstr.it_mkLambda_or_LetIn body_j' ctx_rel_i in
@@ -496,7 +499,7 @@ let detect_recursive_functions (ctnt_i : Constant.t) : (int * Constant.t option 
           Some (i, ctnt_ary)
       | _ -> None
 
-let print_rec pstate (name : Libnames.qualid) =
+let print_rec (pstate : Proof_global.t option) (name : Libnames.qualid) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let reference = Smartlocate.global_with_alias name in
   match reference with
