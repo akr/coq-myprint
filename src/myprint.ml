@@ -7,7 +7,6 @@ open Goptions
 let opt_showprop = ref true
 let _ = declare_bool_option
         { optdepr  = false;
-          optname  = "MyPrint ShowProp";
           optkey   = ["MyPrint";"ShowProp"];
           optread  = (fun () -> !opt_showprop);
           optwrite = (:=) opt_showprop }
@@ -120,11 +119,11 @@ and pp_term_content env sigma term =
       str "(Rel" ++ spc () ++ int i ++ spc () ++ (Name.print name) ++ str ")"
   | Constr.Var name -> str "(Var" ++ spc () ++ str (Id.to_string name) ++ str ")"
   | Constr.Meta i -> str "(Meta" ++ spc () ++ int i ++ str ")"
-  | Constr.Evar (ekey, termary) ->
+  | Constr.Evar (ekey, termlist) ->
       let pp = str "(Evar" ++ spc () ++ int (Evar.repr ekey) in
       List.fold_left
         (fun pp t -> pp ++ spc () ++ pp_term env sigma t)
-        pp (Array.to_list termary) ++
+        pp termlist ++
       str ")"
   | Constr.Sort s -> pr_sort sigma s
   | Constr.Cast (expr, kind, ty) ->
@@ -352,23 +351,23 @@ let pp_ind env sigma ind =
         mutind_body.Declarations.mind_packets) ++
     str ")")
 
-let obtain_env_sigma (pstate : Proof_global.t option) =
+let obtain_env_sigma (pstate : Declare.Proof.t option) =
   match pstate with
   | Some pstate -> let (sigma, env) = Pfedit.get_current_context pstate in (env, sigma)
   | None -> let env = Global.env () in (env, Evd.from_env env)
 
-let print_term (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
+let print_term (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let (sigma, (term3 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma term in
   Feedback.msg_info (pp_term env sigma term3)
 
-let print_type (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
+let print_type (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let (sigma, (term3 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma term in
   let ty = Retyping.get_type_of env sigma term3 in
   Feedback.msg_info (pp_term env sigma ty)
 
-let print_term_type_n (pstate : Proof_global.t option) (n : int) (expr : Constrexpr.constr_expr) =
+let print_term_type_n (pstate : Declare.Proof.t option) (n : int) (expr : Constrexpr.constr_expr) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let (sigma, (term2 : EConstr.constr)) = Constrintern.interp_constr_evars env sigma expr in
   Feedback.msg_info (pp_term env sigma term2);
@@ -378,10 +377,10 @@ let print_term_type_n (pstate : Proof_global.t option) (n : int) (expr : Constre
     Feedback.msg_info (pp_term env sigma !termref)
   done
 
-let print_term_type (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
+let print_term_type (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
   print_term_type_n pstate 1 term
 
-let print_global (pstate : Proof_global.t option) (name : Libnames.qualid) =
+let print_global (pstate : Declare.Proof.t option) (name : Libnames.qualid) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let reference = Smartlocate.global_with_alias name in
   match reference with
@@ -442,7 +441,7 @@ let rec pp_constr_expr (c : Constrexpr.constr_expr) =
   | Constrexpr.CPrim _ -> str "(CPrim)"
   | Constrexpr.CDelimiters _ -> str "(CDelimiters)"
 
-let print_constr_expr (pstate : Proof_global.t option) (term : Constrexpr.constr_expr) =
+let print_constr_expr (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
   Feedback.msg_info (pp_constr_expr term)
 
 let xhh_escape_string s =
@@ -501,7 +500,7 @@ let detect_recursive_functions (ctnt_i : Constant.t) : (int * Constant.t option 
           Some (i, ctnt_ary)
       | _ -> None
 
-let print_rec (pstate : Proof_global.t option) (name : Libnames.qualid) =
+let print_rec (pstate : Declare.Proof.t option) (name : Libnames.qualid) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let reference = Smartlocate.global_with_alias name in
   match reference with
