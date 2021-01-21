@@ -197,7 +197,7 @@ and pp_term_content env sigma term =
       int j ++ spc () ++
       Id.print ind_id ++ spc () ++
       Id.print cons_id ++ str ")"
-  | Constr.Case (ci, tyf, expr, brs) ->
+  | Constr.Case (ci, tyf, iv, expr, brs) ->
       let pp =
         str "(Case" ++ spc () ++
         hv 2 (pp_ci_info ci) ++ spc () ++
@@ -262,6 +262,13 @@ and pp_term_content env sigma term =
   | Constr.Float n ->
       str "(Float" ++ spc () ++
       str (Float64.to_string n) ++ str ")"
+  | Constr.Array (u,t,def,ty) ->
+      str "(Array" ++ spc () ++
+      pp_postjoin_ary (spc ()) (Array.map (pp_term env sigma) t) ++
+      str "|" ++ spc () ++
+      (pp_term env sigma def) ++ spc () ++
+      str ":" ++ spc () ++
+      (pp_term env sigma ty) ++ str ")"
 
 let pp_name name =
   match name with
@@ -353,7 +360,7 @@ let pp_ind env sigma ind =
 
 let obtain_env_sigma (pstate : Declare.Proof.t option) =
   match pstate with
-  | Some pstate -> let (sigma, env) = Pfedit.get_current_context pstate in (env, sigma)
+  | Some pstate -> let (sigma, env) = Declare.Proof.get_current_context pstate in (env, sigma)
   | None -> let env = Global.env () in (env, Evd.from_env env)
 
 let print_term (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
@@ -440,6 +447,7 @@ let rec pp_constr_expr (c : Constrexpr.constr_expr) =
   | Constrexpr.CGeneralization _ -> str "(CGeneralization)"
   | Constrexpr.CPrim _ -> str "(CPrim)"
   | Constrexpr.CDelimiters _ -> str "(CDelimiters)"
+  | Constrexpr.CArray _ -> str "(CArray)"
 
 let print_constr_expr (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
   Feedback.msg_info (pp_constr_expr term)

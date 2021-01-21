@@ -670,3 +670,33 @@ PrintGlobal PrimFloat.two. (* (Float 2) *)
 PrintGlobal PrimFloat.nan. (* (Float nan) *)
 PrintGlobal PrimFloat.infinity. (* (Float inf) *)
 PrintGlobal PrimFloat.neg_infinity. (* (Float -inf) *)
+
+Require Import Int63.
+Local Open Scope int63_scope.
+Require Import PArray.
+
+Definition SampleBoolArray := Eval compute in (make 3 true).[0 <- false].
+PrintGlobal SampleBoolArray.
+(*
+(Array
+  (Construct Coq.Init.Datatypes.bool 0 2 bool false)
+  (Construct Coq.Init.Datatypes.bool 0 1 bool true)
+  (Construct Coq.Init.Datatypes.bool 0 1 bool true)
+  |
+  (Construct Coq.Init.Datatypes.bool 0 1 bool true)
+  :
+  (Ind Coq.Init.Datatypes.bool 0 bool))
+*)
+
+Definition SampleIntArray := Eval compute in (make 3 100).[0 <- 10].[1 <- 11].[2 <- 12].
+PrintGlobal SampleIntArray.
+(*
+(Array
+  (Int 10)
+  (Int 11)
+  (Int 12)
+  |
+  (Int 100)
+  :
+  (Const Coq.Numbers.Cyclic.Int63.Int63.int))
+*)
