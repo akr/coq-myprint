@@ -320,6 +320,13 @@ let pp_ind env sigma ind =
               (List.map
                 (pp_context_rel_decl env sigma)
                 oneind_body.Declarations.mind_arity_ctxt) ++ str "]") ++
+          spc () ++ hv 2 (str "mind_arity=" ++
+            match oneind_body.Declarations.mind_arity with
+            | Declarations.RegularArity ra ->
+                str "RegularArity {user_arity=" ++ Printer.pr_constr_env env sigma ra.Declarations.mind_user_arity ++
+                str ", sort=" ++ Printer.pr_sort sigma ra.Declarations.mind_sort ++
+                str "}"
+            | Declarations.TemplateArity ta -> str "TemplateArity") ++
           spc () ++ hv 2 (str "mind_user_lc=[" ++
             pp_join_ary (spc ())
               (Array.map2
