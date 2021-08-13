@@ -326,7 +326,7 @@ let pp_ind env sigma ind =
                 str "RegularArity {user_arity=" ++ Printer.pr_constr_env env sigma ra.Declarations.mind_user_arity ++
                 str ", sort=" ++ Printer.pr_sort sigma ra.Declarations.mind_sort ++
                 str "}"
-            | Declarations.TemplateArity ta -> str "TemplateArity") ++
+            | Declarations.TemplateArity ta -> str "TemplateArity " ++ Univ.Universe.pr ta.Declarations.template_level) ++
           spc () ++ hv 2 (str "mind_user_lc=[" ++
             pp_join_ary (spc ())
               (Array.map2
