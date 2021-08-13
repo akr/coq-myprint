@@ -317,7 +317,7 @@ let pp_ind env sigma ind =
           hv 2 (str "(" ++
           str (Id.to_string oneind_body.Declarations.mind_typename) ++
           spc () ++ hv 2 (str "mind_arity_ctxt=[" ++ pp_join_list (spc ())
-              (List.map
+              (List.rev_map
                 (pp_context_rel_decl env sigma)
                 oneind_body.Declarations.mind_arity_ctxt) ++ str "]") ++
           spc () ++ hv 2 (str "mind_arity=" ++
