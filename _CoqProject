@@ -1,7 +1,9 @@
 -Q theories myprint
 -I src
 -Q src myprint
+src/myprint.mli
 src/myprint.ml
 src/g_myprint.mlg
+src/g_myprint.mli
 src/myprint_plugin.mlpack
 theories/myprint.v

@@ -59,11 +59,13 @@ let pp_postjoin_ary sep ary =
     (mt ())
     ary
 
+(*
 let pp_postjoin_list sep l =
   List.fold_left
     (fun pp elt -> pp ++ elt ++ sep)
     (mt ())
     l
+*)
 
 let pr_sort sigma sort =
   let s = EConstr.ESorts.kind sigma sort in
@@ -197,7 +199,8 @@ and pp_term_content env sigma term =
       int j ++ spc () ++
       Id.print ind_id ++ spc () ++
       Id.print cons_id ++ str ")"
-  | Constr.Case (ci, tyf, iv, expr, brs) ->
+  | Constr.Case (ci,u,pms,p,iv,c,bl) ->
+      let (ci, tyf, iv, expr, brs) = EConstr.expand_case env sigma (ci,u,pms,p,iv,c,bl) in
       let pp =
         str "(Case" ++ spc () ++
         hv 2 (pp_ci_info ci) ++ spc () ++
