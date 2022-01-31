@@ -135,7 +135,7 @@ and pp_term_content env sigma term =
       | Constr.VMcast -> "VM"
       | Constr.NATIVEcast -> "NATIVE"
       | Constr.DEFAULTcast -> "DEFAULT"
-      | Constr.REVERTcast -> "REVERT") ++ spc () ++
+      ) ++ spc () ++
       (pp_term env sigma ty) ++ str ")"
   | Constr.Prod (name, ty, body) ->
       let decl = Context.Rel.Declaration.LocalAssum (name, ty) in
@@ -421,17 +421,15 @@ let rec pp_constr_expr (c : Constrexpr.constr_expr) =
   | Constrexpr.CProdN _ -> str "(CProdN)"
   | Constrexpr.CLambdaN _ -> str "(CLambdaN)"
   | Constrexpr.CLetIn _ -> str "(CLetIn)"
-  | Constrexpr.CAppExpl ((projflag, qid, iexpr_opt), args) ->
+  | Constrexpr.CAppExpl ((qid, iexpr_opt), args) ->
       str "(CAppExpl" ++
-      (match projflag with | None -> mt () | Some i -> spc () ++ str "projflag=" ++ int i) ++
       spc () ++
       Ppconstr.pr_qualid qid ++
       pp_prejoin_list (spc ())
         (List.map (fun arg -> pp_constr_expr arg) args) ++
       str ")"
-  | Constrexpr.CApp ((projflag, f), args) ->
+  | Constrexpr.CApp (f, args) ->
       str "(CApp" ++
-      (match projflag with | None -> mt () | Some i -> spc () ++ str "projflag=" ++ int i) ++
       spc () ++
       pp_constr_expr f ++
       pp_prejoin_list (spc ())
@@ -444,6 +442,7 @@ let rec pp_constr_expr (c : Constrexpr.constr_expr) =
               | Constrexpr.ExplByName id -> Id.print id ++ str ":=" ++ pp_constr_expr arg)
         args) ++
       str ")"
+  | Constrexpr.CProj _ -> str "(CProj)"
   | Constrexpr.CRecord _ -> str "(CRecord)"
   | Constrexpr.CCases _ -> str "(CCases)"
   | Constrexpr.CLetTuple _ -> str "(CLetTuple)"
