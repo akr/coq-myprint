@@ -4,8 +4,8 @@ This software provides Coq commands to print Gallina terms.
 
 ## Requiements
 
-- Coq 8.13 (Coq 8.12 doesn't work)
-- OCaml 4.11.1
+- Coq 8.15 (Coq 8.14 doesn't work)
+- OCaml 4.13.1
 
 ## How to build
 
