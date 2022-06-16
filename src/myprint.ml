@@ -541,3 +541,14 @@ let print_rec (pstate : Declare.Proof.t option) (name : Libnames.qualid) =
   | VarRef _ -> user_err (str "can't print VarRef")
   | IndRef ind -> Feedback.msg_info (pp_ind env sigma ind)
   | ConstructRef _ -> user_err (str "can't print ConstructRef")
+
+let print_goal () =
+  Proofview.Goal.enter begin fun gl ->
+    let env = Proofview.Goal.env gl in
+    let sigma = Proofview.Goal.sigma gl in
+    let concl = Proofview.Goal.concl gl in
+    Feedback.msg_info (pp_term env sigma concl);
+    Proofview.tclUNIT ()
+  end
+
+

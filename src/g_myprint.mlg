@@ -26,3 +26,8 @@ VERNAC COMMAND EXTEND Myprint CLASSIFIED AS QUERY
     | [ "PrintEscape" ident(id) ] -> { print_escape id }
 END
 
+TACTIC EXTEND mycut_tactic
+| [ "PrintGoal" ] -> { print_goal () }
+END
+
+

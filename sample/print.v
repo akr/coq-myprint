@@ -700,3 +700,26 @@ PrintGlobal SampleIntArray.
   :
   (Const Coq.Numbers.Cyclic.Int63.Int63.int))
 *)
+
+Goal forall x:nat, x = x.
+PrintGoal.
+(*
+(Prod
+  x (Ind Coq.Init.Datatypes.nat 0 nat)
+  (App
+    (Ind Coq.Init.Logic.eq 0 eq)
+    (Ind Coq.Init.Datatypes.nat 0 nat)
+    (Rel 1 x)
+    (Rel 1 x)))
+*)
+intro x.
+PrintTerm x. (* (Var x) *)
+PrintGoal.
+(*
+(App
+  (Ind Coq.Init.Logic.eq 0 eq)
+  (Ind Coq.Init.Datatypes.nat 0 nat)
+  (Var x)
+  (Var x))
+*)
+Abort.
