@@ -1,1 +1,1 @@
-Declare ML Module "myprint_plugin".
+Declare ML Module "coq-myprint.plugin".

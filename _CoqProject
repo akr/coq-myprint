@@ -1,3 +1,4 @@
+src/META.coq-myprint
 -Q theories myprint
 -I src
 -Q src myprint

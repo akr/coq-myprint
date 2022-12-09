@@ -1,10 +1,10 @@
 
-DECLARE PLUGIN "myprint_plugin"
+DECLARE PLUGIN "coq-myprint.plugin"
 
 {
 let () = Mltop.add_known_plugin (fun () ->
   Feedback.msg_info Pp.(str"myprint 0.1"))
-  "myprint"
+  "coq-myprint.plugin"
 
 open Myprint
 

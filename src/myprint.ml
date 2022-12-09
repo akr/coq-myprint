@@ -67,8 +67,7 @@ let pp_postjoin_list sep l =
     l
 *)
 
-let pr_sort sigma sort =
-  let s = EConstr.ESorts.kind sigma sort in
+let pr_sort s =
   match s with
   | Sorts.SProp ->
       str "(Sort" ++ spc () ++ str "SProp)"
@@ -80,6 +79,10 @@ let pr_sort sigma sort =
       str "(Sort" ++ spc () ++
       str "Type" ++ spc () ++
       Univ.Universe.pr u ++ str ")"
+
+let pr_esort sigma sort =
+  let s = EConstr.ESorts.kind sigma sort in
+  pr_sort s
 
 let pp_ci_info ci =
   let (mutind, i) = ci.Constr.ci_ind in
@@ -127,7 +130,7 @@ and pp_term_content env sigma term =
         (fun pp t -> pp ++ spc () ++ pp_term env sigma t)
         pp termlist ++
       str ")"
-  | Constr.Sort s -> pr_sort sigma s
+  | Constr.Sort s -> pr_esort sigma s
   | Constr.Cast (expr, kind, ty) ->
       str "(Cast " ++
       (pp_term env sigma expr) ++ spc () ++
@@ -289,19 +292,16 @@ let pp_context_rel_decl env sigma decl =
       Printer.pr_constr_env env sigma ty ++ str ":=" ++
       Printer.pr_constr_env env sigma expr ++ str ")"
 
-let type_of_inductive_arity mind_arity : Constr.t =
-  match mind_arity with
-  | Declarations.RegularArity regind_arity -> regind_arity.Declarations.mind_user_arity
-  | Declarations.TemplateArity temp_arity -> Constr.mkType (temp_arity : Declarations.template_arity).Declarations.template_level
-
 let pp_ind env sigma ind =
   let (mutind, i) = ind in
   let mutind_body = Environ.lookup_mind mutind env in
+  (*
   let env = Environ.push_rel_context (
     List.map (fun oneind_body ->
       Context.Rel.Declaration.LocalAssum (Context.annotR (Names.Name.Name oneind_body.Declarations.mind_typename), type_of_inductive_arity oneind_body.Declarations.mind_arity))
       (List.rev (Array.to_list mutind_body.Declarations.mind_packets))
   ) env in
+*)
   hv 2 (str "(MutInd" ++ spc () ++
     str (Id.to_string mutind_body.Declarations.mind_packets.(i).Declarations.mind_typename) ++
     spc () ++ str "mind_record=" ++ str (match mutind_body.Declarations.mind_record with Declarations.NotRecord -> "NotRecord" | Declarations.FakeRecord -> "FakeRecord" | Declarations.PrimRecord _ -> "PrimRecord") ++
@@ -329,7 +329,7 @@ let pp_ind env sigma ind =
                 str "RegularArity {user_arity=" ++ Printer.pr_constr_env env sigma ra.Declarations.mind_user_arity ++
                 str ", sort=" ++ Printer.pr_sort sigma ra.Declarations.mind_sort ++
                 str "}"
-            | Declarations.TemplateArity ta -> str "TemplateArity " ++ Univ.Universe.pr ta.Declarations.template_level) ++
+            | Declarations.TemplateArity ta -> str "TemplateArity " ++ pr_sort ta.Declarations.template_level) ++
           spc () ++ hv 2 (str "mind_user_lc=[" ++
             pp_join_ary (spc ())
               (Array.map2
