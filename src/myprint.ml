@@ -127,8 +127,11 @@ and pp_term_content env sigma term =
   | Constr.Evar (ekey, termlist) ->
       let pp = str "(Evar" ++ spc () ++ int (Evar.repr ekey) in
       List.fold_left
-        (fun pp t -> pp ++ spc () ++ pp_term env sigma t)
-        pp termlist ++
+        (fun pp t_opt -> pp ++ spc () ++
+          match t_opt with
+          | None -> str "None"
+          | Some t -> str "(Some" ++ spc () ++ pp_term env sigma t ++ str ")")
+        pp (SList.to_list termlist) ++
       str ")"
   | Constr.Sort s -> pr_esort sigma s
   | Constr.Cast (expr, kind, ty) ->
