@@ -6,7 +6,8 @@ open Goptions
 
 let opt_showprop = ref true
 let _ = declare_bool_option
-        { optdepr  = false;
+        { optstage = Summary.Stage.Interp;
+          optdepr  = None;
           optkey   = ["MyPrint";"ShowProp"];
           optread  = (fun () -> !opt_showprop);
           optwrite = (:=) opt_showprop }
@@ -78,7 +79,8 @@ let pr_sort s =
   | Sorts.Type u ->
       str "(Sort" ++ spc () ++
       str "Type" ++ spc () ++
-      Univ.Universe.pr u ++ str ")"
+      Univ.Universe.pr UnivNames.pr_with_global_universes u ++ str ")"
+  | Sorts.QSort (qvar,u) -> str "(QSort" ++ spc () ++ Sorts.QVar.pr qvar ++ spc () ++ Univ.Universe.pr UnivNames.pr_with_global_universes u  ++ str ")"
 
 let pr_esort sigma sort =
   let s = EConstr.ESorts.kind sigma sort in
@@ -460,6 +462,8 @@ let rec pp_constr_expr (c : Constrexpr.constr_expr) =
   | Constrexpr.CPrim _ -> str "(CPrim)"
   | Constrexpr.CDelimiters _ -> str "(CDelimiters)"
   | Constrexpr.CArray _ -> str "(CArray)"
+  | Constrexpr.CGenarg _ -> str "(CGenarg)"
+  | Constrexpr.CGenargGlob _ -> str "(CGenargGlob)"
 
 let print_constr_expr (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
   Feedback.msg_info (pp_constr_expr term)
@@ -489,7 +493,7 @@ let detect_recursive_functions (ctnt_i : Constant.t) : (int * Constant.t option 
                       Printer.pr_constant env ctnt_i)
   | Some (def_i,_,_) ->
       let def_i = EConstr.of_constr def_i in
-      let (ctx_rel_i, body_i) = EConstr.decompose_lam_assum sigma def_i in
+      let (ctx_rel_i, body_i) = EConstr.decompose_lambda_decls sigma def_i in
       match EConstr.kind sigma body_i with
       | Constr.Fix ((ia, i), (nary, tary, fary)) ->
           let ctnt_ary =
