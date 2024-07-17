@@ -68,7 +68,7 @@ let pp_postjoin_list sep l =
     l
 *)
 
-let pr_sort s =
+let pr_sort (sigma : Evd.evar_map) s =
   match s with
   | Sorts.SProp ->
       str "(Sort" ++ spc () ++ str "SProp)"
@@ -79,12 +79,12 @@ let pr_sort s =
   | Sorts.Type u ->
       str "(Sort" ++ spc () ++
       str "Type" ++ spc () ++
-      Univ.Universe.pr UnivNames.pr_with_global_universes u ++ str ")"
-  | Sorts.QSort (qvar,u) -> str "(QSort" ++ spc () ++ Sorts.QVar.pr qvar ++ spc () ++ Univ.Universe.pr UnivNames.pr_with_global_universes u  ++ str ")"
+      Univ.Universe.pr UnivNames.pr_level_with_global_universes u ++ str ")"
+  | Sorts.QSort (qvar,u) -> str "(QSort" ++ spc () ++ Termops.pr_evd_qvar sigma qvar ++ spc () ++ Univ.Universe.pr UnivNames.pr_level_with_global_universes u  ++ str ")"
 
 let pr_esort sigma sort =
   let s = EConstr.ESorts.kind sigma sort in
-  pr_sort s
+  pr_sort sigma s
 
 let pp_ci_info ci =
   let (mutind, i) = ci.Constr.ci_ind in
@@ -103,6 +103,12 @@ let pp_ci_info ci =
 let push_rec_types env sigma (nameary,tyary,funary) =
   let to_constr = EConstr.to_constr sigma in
   Environ.push_rec_types (nameary, Array.map to_constr tyary, Array.map to_constr funary) env
+
+let pr_relevance (sigma : Evd.evar_map) (sr : Sorts.relevance) : Pp.t =
+  match sr with
+  | Relevant -> str "(Relevant)"
+  | Irrelevant -> str "(Irrelevant)"
+  | RelevanceVar qvar -> str "(RelevanceVar" ++ spc () ++ Termops.pr_evd_qvar sigma qvar ++ str ")"
 
 let rec pp_term env sigma term =
   if !opt_showprop then
@@ -208,11 +214,12 @@ and pp_term_content env sigma term =
       Id.print ind_id ++ spc () ++
       Id.print cons_id ++ str ")"
   | Constr.Case (ci,u,pms,p,iv,c,bl) ->
-      let (ci, tyf, iv, expr, brs) = EConstr.expand_case env sigma (ci,u,pms,p,iv,c,bl) in
+      let (ci, (tyf, sr), iv, expr, brs) = EConstr.expand_case env sigma (ci,u,pms,p,iv,c,bl) in
       let pp =
         str "(Case" ++ spc () ++
         hv 2 (pp_ci_info ci) ++ spc () ++
         (pp_term env sigma tyf) ++ spc () ++
+        pr_relevance sigma sr ++ spc () ++
         (pp_term env sigma expr)
       in
       (List.fold_left
@@ -260,12 +267,13 @@ and pp_term_content env sigma term =
           (pp_term env2 sigma f) ++ str ")"))
         pp l3 ++
       str ")"
-  | Constr.Proj (proj, expr) ->
+  | Constr.Proj (proj, sr, expr) ->
       str "(Proj" ++ spc () ++
       str (Projection.to_string proj) ++
       str "(" ++
       str "npars=" ++ int (Projection.npars proj) ++ str "," ++
       str "arg=" ++ int (Projection.arg proj) ++ str ")" ++ spc () ++
+      pr_relevance sigma sr ++ spc () ++
       (pp_term env sigma expr) ++ str ")"
   | Constr.Int n ->
       str "(Int" ++ spc () ++
@@ -334,7 +342,7 @@ let pp_ind env sigma ind =
                 str "RegularArity {user_arity=" ++ Printer.pr_constr_env env sigma ra.Declarations.mind_user_arity ++
                 str ", sort=" ++ Printer.pr_sort sigma ra.Declarations.mind_sort ++
                 str "}"
-            | Declarations.TemplateArity ta -> str "TemplateArity " ++ pr_sort ta.Declarations.template_level) ++
+            | Declarations.TemplateArity ta -> str "TemplateArity " ++ pr_sort sigma ta.Declarations.template_level) ++
           spc () ++ hv 2 (str "mind_user_lc=[" ++
             pp_join_ary (spc ())
               (Array.map2
