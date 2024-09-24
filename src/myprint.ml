@@ -101,11 +101,10 @@ let pp_ci_info ci =
   str "]") ++ str ")"
 
 let push_rec_types env sigma (nameary,tyary,funary) =
-  let to_constr = EConstr.to_constr sigma in
-  Environ.push_rec_types (nameary, Array.map to_constr tyary, Array.map to_constr funary) env
+  EConstr.push_rec_types (nameary, tyary, funary) env
 
-let pr_relevance (sigma : Evd.evar_map) (sr : Sorts.relevance) : Pp.t =
-  match sr with
+let pr_erelevance (sigma : Evd.evar_map) (esr : EConstr.ERelevance.t) : Pp.t =
+  match EConstr.ERelevance.kind sigma esr with
   | Relevant -> str "(Relevant)"
   | Irrelevant -> str "(Irrelevant)"
   | RelevanceVar qvar -> str "(RelevanceVar" ++ spc () ++ Termops.pr_evd_qvar sigma qvar ++ str ")"
@@ -214,12 +213,12 @@ and pp_term_content env sigma term =
       Id.print ind_id ++ spc () ++
       Id.print cons_id ++ str ")"
   | Constr.Case (ci,u,pms,p,iv,c,bl) ->
-      let (ci, (tyf, sr), iv, expr, brs) = EConstr.expand_case env sigma (ci,u,pms,p,iv,c,bl) in
+      let (ci, (tyf, esr), iv, expr, brs) = EConstr.expand_case env sigma (ci,u,pms,p,iv,c,bl) in
       let pp =
         str "(Case" ++ spc () ++
         hv 2 (pp_ci_info ci) ++ spc () ++
         (pp_term env sigma tyf) ++ spc () ++
-        pr_relevance sigma sr ++ spc () ++
+        pr_erelevance sigma esr ++ spc () ++
         (pp_term env sigma expr)
       in
       (List.fold_left
@@ -267,13 +266,13 @@ and pp_term_content env sigma term =
           (pp_term env2 sigma f) ++ str ")"))
         pp l3 ++
       str ")"
-  | Constr.Proj (proj, sr, expr) ->
+  | Constr.Proj (proj, esr, expr) ->
       str "(Proj" ++ spc () ++
       str (Projection.to_string proj) ++
       str "(" ++
       str "npars=" ++ int (Projection.npars proj) ++ str "," ++
       str "arg=" ++ int (Projection.arg proj) ++ str ")" ++ spc () ++
-      pr_relevance sigma sr ++ spc () ++
+      pr_erelevance sigma esr ++ spc () ++
       (pp_term env sigma expr) ++ str ")"
   | Constr.Int n ->
       str "(Int" ++ spc () ++
@@ -288,6 +287,10 @@ and pp_term_content env sigma term =
       (pp_term env sigma def) ++ spc () ++
       str ":" ++ spc () ++
       (pp_term env sigma ty) ++ str ")"
+  | Constr.String pstr ->
+      str "(String" ++ spc () ++
+      str (Pstring.to_string pstr) ++
+      str ")"
 
 let pp_name name =
   match name with
@@ -410,15 +413,31 @@ let print_term_type_n (pstate : Declare.Proof.t option) (n : int) (expr : Constr
 let print_term_type (pstate : Declare.Proof.t option) (term : Constrexpr.constr_expr) =
   print_term_type_n pstate 1 term
 
+let get_constant_definition (env : Environ.env) (ctnt : Constant.t) : Constr.t =
+  let ctnt_body = Environ.lookup_constant ctnt env in
+  match ctnt_body.const_body with
+  | Undef _ -> user_err (str "can't print constant_def.Undef")
+  | OpaqueDef _ -> user_err (str "can't print constant_def.OpaqueDef")
+  | Primitive _ -> user_err (str "can't print constant_def.Primitive")
+  | Symbol _ -> user_err (str "can't print constant_def.Symbol")
+  | Def term -> term
+
+let get_constant_definition_opt (env : Environ.env) (ctnt : Constant.t) : Constr.t option =
+  let ctnt_body = Environ.lookup_constant ctnt env in
+  match ctnt_body.const_body with
+  | Undef _ -> None
+  | OpaqueDef _ -> None
+  | Primitive _ -> None
+  | Symbol _ -> None
+  | Def term -> Some term
+
 let print_global (pstate : Declare.Proof.t option) (name : Libnames.qualid) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
   let reference = Smartlocate.global_with_alias name in
   match reference with
-  | ConstRef c ->
-     begin match Global.body_of_constant Library.indirect_accessor c with
-     | Some (b, _, _) -> Feedback.msg_info (pp_term env sigma (EConstr.of_constr b))
-     | None -> user_err (str "can't print axiom")
-     end
+  | ConstRef ctnt ->
+      let term = get_constant_definition (Global.env ()) ctnt in
+      Feedback.msg_info (pp_term env sigma (EConstr.of_constr term))
   | VarRef _ -> user_err (str "can't print VarRef")
   | IndRef ind -> Feedback.msg_info (pp_ind env sigma ind)
   | ConstructRef _ -> user_err (str "can't print ConstructRef")
@@ -496,41 +515,38 @@ let detect_recursive_functions (ctnt_i : Constant.t) : (int * Constant.t option 
   let env = Global.env () in
   let sigma = Evd.from_env env in
   let modpath = KerName.modpath (Constant.canonical ctnt_i) in
-  match Global.body_of_constant Library.indirect_accessor ctnt_i with
-  | None -> user_err (Pp.str "couldn't obtain the definition of" ++ Pp.spc () ++
-                      Printer.pr_constant env ctnt_i)
-  | Some (def_i,_,_) ->
-      let def_i = EConstr.of_constr def_i in
-      let (ctx_rel_i, body_i) = EConstr.decompose_lambda_decls sigma def_i in
-      match EConstr.kind sigma body_i with
-      | Constr.Fix ((ia, i), (nary, tary, fary)) ->
-          let ctnt_ary =
-            Array.mapi (fun j nm ->
-              if j = i then
-                Some ctnt_i
-              else
-                let nm = Context.binder_name nm in
-                match nm with
-                | Name.Anonymous -> None
-                | Name.Name id ->
-                    let label = Label.of_id id in
-                    let ctnt_j = Constant.make1 (KerName.make modpath label) in
-                    try
-                      match Global.body_of_constant Library.indirect_accessor ctnt_j with
-                      | None -> None
-                      | Some (def_j,_,_) ->
-                          let def_j = EConstr.of_constr def_j in
-                          let body_j' = EConstr.mkFix ((ia, j), (nary, tary, fary)) in
-                          let def_j' = EConstr.it_mkLambda_or_LetIn body_j' ctx_rel_i in
-                          if EConstr.eq_constr sigma def_j def_j' then
-                            Some ctnt_j
-                          else
-                            None
-                    with Not_found -> None)
-            nary
-          in
-          Some (i, ctnt_ary)
-      | _ -> None
+  let def_i = EConstr.of_constr (get_constant_definition env ctnt_i) in
+  let (ctx_rel_i, body_i) = EConstr.decompose_lambda_decls sigma def_i in
+  match EConstr.kind sigma body_i with
+  | Constr.Fix ((ia, i), (nary, tary, fary)) ->
+      let ctnt_ary =
+        Array.mapi (fun j nm ->
+          if j = i then
+            Some ctnt_i
+          else
+            let nm = Context.binder_name nm in
+            match nm with
+            | Name.Anonymous -> None
+            | Name.Name id ->
+                let label = Label.of_id id in
+                let ctnt_j = Constant.make1 (KerName.make modpath label) in
+                if Environ.mem_constant ctnt_j env then
+                  match get_constant_definition_opt env ctnt_j with
+                  | None -> None
+                  | Some def_j ->
+                      let def_j = EConstr.of_constr def_j in
+                      let body_j' = EConstr.mkFix ((ia, j), (nary, tary, fary)) in
+                      let def_j' = EConstr.it_mkLambda_or_LetIn body_j' ctx_rel_i in
+                      if EConstr.eq_constr sigma def_j def_j' then
+                        Some ctnt_j
+                      else
+                        None
+                else
+                  None)
+        nary
+      in
+      Some (i, ctnt_ary)
+  | _ -> None
 
 let print_rec (pstate : Declare.Proof.t option) (name : Libnames.qualid) =
   let ((env : Environ.env), (sigma : Evd.evar_map)) = obtain_env_sigma pstate in
